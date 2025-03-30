@@ -13,7 +13,7 @@ func init() {
 	godotenv.Load("../.env")
 }
 
-func TestMintEd25519(t *testing.T) {
+func TestExpenseRatio(t *testing.T) {
 	fromAddr := "E9U2FT5gRkqKS3MsDWYVpVmvLX7XaC7JGL38pZSpYEn3" // in this test case, sending results to self
 	publicKey := "r_A_a_6E4RM19bfUJHBKcoZCvfiEmZ7JVWpgbFGgtadwjH9Xoo"
 	privateKey := "31WUV7cUHUVWtoCUtf6WqTHooMCQ4Cgsikt6j98QFbBaD3cYShXWeNXFSScCJwYRxNj8ismxrBU6LiFPL51NBZXf"

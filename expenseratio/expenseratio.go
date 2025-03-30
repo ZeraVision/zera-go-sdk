@@ -11,9 +11,9 @@ import (
 	"github.com/ZeraVision/zera-go-sdk/nonce"
 	"github.com/ZeraVision/zera-go-sdk/sign"
 	"github.com/ZeraVision/zera-go-sdk/transcode"
-	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
