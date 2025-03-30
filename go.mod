@@ -7,6 +7,7 @@ require (
 	github.com/ZeraVision/go-zera-network v0.0.170
 	github.com/ZeraVision/zn-wallet-manager v0.0.0-20250304003022-fc6107d50d12
 	github.com/cloudflare/circl v1.6.0
+	github.com/golang/protobuf v1.5.4
 	github.com/jackc/pgtype v1.14.4
 	github.com/joho/godotenv v1.5.1
 	github.com/tyler-smith/go-bip39 v1.1.0
