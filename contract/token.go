@@ -16,7 +16,7 @@ import (
 )
 
 type TokenData struct {
-	ContractVersion    uint64                 // TODO [format]
+	ContractVersion    uint64                 // [suggested] major (as needed) - minor (x2) - patch (x3) (ie 1.1.0 = 101000 = 1 | 01 | 000)
 	ContractId         string                 // Contract ID (ie $ZRA+0000 - must be unique to network)
 	Symbol             string                 // Symbol (ie $ZRA) without any contractID identified (ie $ZRA+0000)
 	Name               string                 // Name of the contract (ie ZERA)
@@ -87,7 +87,7 @@ func CreateTokenTXN(nonceInfo nonce.NonceInfo, data *TokenData, publicKeyBase58 
 		Governance:         data.Governance,
 		RestrictedKeys:     data.RestrictedKeys,
 		CoinDenomination:   &data.Denomination,
-		MaxSupply:          &data.MaxSupply, // TODO check ptr
+		MaxSupply:          &data.MaxSupply,
 		MaxSupplyRelease:   data.MaxSupplyRelease,
 		PremintWallets:     data.Premint,
 		CustomParameters:   data.CustomParameters,
