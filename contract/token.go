@@ -18,9 +18,9 @@ import (
 type TokenData struct {
 	ContractVersion    uint64                 // [suggested] major (as needed) - minor (x2) - patch (x3) (ie 1.1.0 = 101000 = 1 | 01 | 000)
 	ContractId         string                 // Contract ID (ie $ZRA+0000 - must be unique to network)
-	Symbol             string                 // Symbol (ie $ZRA) without any contractID identified (ie $ZRA+0000)
+	Symbol             string                 // Symbol (ie ZRA) without any contractID identifier (ie $ZRA+0000)
 	Name               string                 // Name of the contract (ie ZERA)
-	Governance         *pb.Governance         // Governance configuration (ie empty, staggered, adaptive, cycle, staged)
+	Governance         *pb.Governance         // Governance configuration (ie staged, cycle, adaptive, staged, cycle, [empty])
 	RestrictedKeys     []*pb.RestrictedKey    // Restricted keys for the contract (ie empty (not suitable for most cases), other specicial permissions)
 	Denomination       pb.CoinDenomination    // How many 'parts' per coin there are (ie ZERA has 1_000_000_000 parts per coin)
 	MaxSupply          string                 // Maximum supply of the contract in denomination units (not full coins)
