@@ -20,7 +20,7 @@ type GovernanceTypeHelper struct {
 	Type           GovernanceType
 	ProposalPeriod *ProposalPeriod
 	Stages         []*Stage
-	StartTimestamp *timestamppb.Timestamp // only present for staged and cycle, represents the first start time of the cycle with truncated hour
+	StartTimestamp *timestamppb.Timestamp // only present for staggared, staged, and cycle. For staged and cycle, the time is truncated to hour (ie if time is 11:35.32, network will use 11:00:00)
 }
 
 type ProposalPeriodType int16
@@ -31,7 +31,7 @@ const (
 )
 
 // Present with staged, cycle, and staggered types -- not adaptive
-// For staged this represents the SUM of all periods specified in StageLength
+// If using in staged and want a stage to be a month, you MUST put months for proposal period. Ie you can't have 60 days as the period and a 1 month stage.
 type ProposalPeriod struct {
 	PeriodType   ProposalPeriodType // days or months
 	VotingPeriod uint32             // how long is it voted on
@@ -96,7 +96,6 @@ func CreateGovernance(govType GovernanceTypeHelper, regularQuorum float64, fastQ
 		}
 	}
 
-	// TODO verify this
 	if govType.Type == Staged || govType.Type == Cycle {
 		if gov.StartTimestamp == nil {
 			return nil, fmt.Errorf("startTimestamp is required for staged and cycle governance types")
@@ -104,9 +103,7 @@ func CreateGovernance(govType GovernanceTypeHelper, regularQuorum float64, fastQ
 
 		gov.StartTimestamp = govType.StartTimestamp
 	} else {
-		if govType.StartTimestamp != nil {
-			return nil, fmt.Errorf("startTimestamp is not allowed for adaptive or staggared governance types -- have you made a mistake?")
-		}
+		fmt.Println("warning: startTimestamp is ignored for adaptive and staggered governance types")
 	}
 
 	// Add staged parameters

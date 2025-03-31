@@ -124,16 +124,16 @@ func CreateTokenTXN(nonceInfo nonce.NonceInfo, data *TokenData, publicKeyBase58 
 		return nil, fmt.Errorf("failed to sign contract transaction: %v", err)
 	}
 
-	// Step 6: Assign signature to base
+	// Step 5: Assign signature to base
 	contractTxn.Base.Signature = signature
 
-	// Step 7: Serialize again with signature
+	// Step 6: Serialize again with signature
 	byteDataWithSig, err := proto.Marshal(contractTxn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to serialize signed contract transaction: %v", err)
 	}
 
-	// Step 8: Hash the signed transaction
+	// Step 7: Hash the signed transaction
 	hash := transcode.SHA3256(byteDataWithSig)
 	contractTxn.Base.Hash = hash
 

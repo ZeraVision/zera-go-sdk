@@ -42,38 +42,37 @@ func TestTokenCreation(t *testing.T) {
 	// Governance
 	govType := contract.GovernanceTypeHelper{
 		Type: contract.Staggared,
-		ProposalPeriod: &contract.ProposalPeriod{ // not present for adaptive // TODO check how this behaves with staged
-			PeriodType:   contract.Days,
-			VotingPeriod: 7,
+		ProposalPeriod: &contract.ProposalPeriod{
+			PeriodType:   contract.Months,
+			VotingPeriod: 2,
 		},
-		/*Stages: []*contract.Stage{ // present only for staged governance type
+		Stages: []*contract.Stage{ // present only for staged governance type
 			{
 				PeriodType:  contract.Days,
-				Length:      7,
+				Length:      14,
 				Break:       false,
-				MaxApproved: 15,
+				MaxApproved: 20,
 			},
 			{
-				PeriodType:  contract.Days,
-				Length:      7,
-				Break:       true,
-				MaxApproved: 10, // TODO check on how max approved behaves on break
+				PeriodType: contract.Days,
+				Length:     7,
+				Break:      true,
+				//* max approved not processed if break
 			},
 			{
 				PeriodType:  contract.Months,
 				Length:      1,
 				Break:       false,
-				MaxApproved: 5,
+				MaxApproved: 10,
 			},
 			{
-				PeriodType:  contract.Days,
-				Length:      14,
-				Break:       true,
-				MaxApproved: 0, // TODO ''
+				PeriodType: contract.Days, // On remainder PeriodType doesnt matter
+				Length:     0,             // 0 = remainder of days left in proposal period
+				Break:      true,
 			},
-		},*/
+		},
 
-		StartTimestamp: timestamppb.New(time.Now()), // TODO check on how this behaves with adaptive, staged, and truncates with cycles
+		StartTimestamp: timestamppb.New(time.Now()),
 	}
 
 	allowedProposalContracts := []string{
