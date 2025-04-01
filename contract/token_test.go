@@ -42,11 +42,11 @@ func TestTokenCreation(t *testing.T) {
 	// Governance
 	govType := contract.GovernanceTypeHelper{
 		Type: contract.Staggared,
-		ProposalPeriod: &contract.ProposalPeriod{
+		ProposalPeriod: &contract.ProposalPeriod{ // this period needs to be > stages. If any stages need to be months, must be PeriodType Months
 			PeriodType:   contract.Months,
 			VotingPeriod: 2,
 		},
-		Stages: []*contract.Stage{ // present only for staged governance type
+		/*Stages: []*contract.Stage{ // present only for staged governance type
 			{
 				PeriodType:  contract.Days,
 				Length:      14,
@@ -70,7 +70,7 @@ func TestTokenCreation(t *testing.T) {
 				Length:     0,             // 0 = remainder of days left in proposal period
 				Break:      true,
 			},
-		},
+		},*/
 
 		StartTimestamp: timestamppb.New(time.Now()),
 	}

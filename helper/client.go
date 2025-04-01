@@ -5,11 +5,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-// struct for client implementation of grpcs
-type NetworkClient struct {
-	client pb.TXNServiceClient
-}
-
 // constructor for client implementation of grpcs
 func NewNetworkClient(conn *grpc.ClientConn) pb.TXNServiceClient {
 	return pb.NewTXNServiceClient(conn)
