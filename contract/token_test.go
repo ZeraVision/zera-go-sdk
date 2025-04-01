@@ -5,15 +5,13 @@ import (
 	"time"
 
 	"github.com/ZeraVision/zera-go-sdk/contract"
+	"github.com/ZeraVision/zera-go-sdk/helper"
 	"github.com/ZeraVision/zera-go-sdk/nonce"
 	"github.com/ZeraVision/zera-go-sdk/transcode"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestTokenCreation(t *testing.T) {
-	// fromAddr := "8ZfvifzSPMhhhivnH6NtaBXcmF3vsSaiB8KBULTetBcR"
-	// publicKey := "A_c_FPXdqFTeqC3rHCaAAXmXbunb8C5BbRZEZNGjt23dAVo7"
-	// privateKey := "2ap5CkCekErkqJ4UuSGAW1BmRRRNr8hXaebudv1j8TY6mJMSsbnniakorFGmetE4aegsyQAD8WX1N8Q2Y45YEBDs"
 	fromAddr := "8ZfvifzSPMhhhivnH6NtaBXcmF3vsSaiB8KBULTetBcR"
 	publicKey := "A_c_FPXdqFTeqC3rHCaAAXmXbunb8C5BbRZEZNGjt23dAVo7"
 	privateKey := "2ap5CkCekErkqJ4UuSGAW1BmRRRNr8hXaebudv1j8TY6mJMSsbnniakorFGmetE4aegsyQAD8WX1N8Q2Y45YEBDs"
@@ -101,7 +99,38 @@ func TestTokenCreation(t *testing.T) {
 		Name:            "Test Token",
 		Governance:      gov,
 	}
-	//
+
+	rKey1 := "r_A_c_FPXdqFTeqC3rHCaAAXmXbunb8C5BbRZEZNGjt23dAVo7"
+	rKey2 := "r_B_c_8TZAaoUWbGvkxaWdWBXJ3mVHXVXLDJgtbeexkBzj5ySjpru7yZvfuKwGGHt2gtFpQfQCaRnBPU43bV"
+
+	// Restricted keys - customize as per your use case
+	config := []contract.RestrictedConfig{
+		{
+			PublicKey:      helper.PublicKey{Single: &rKey1},
+			TimeDelay:      25,
+			UpdateContract: true,
+			Mint:           true,
+			Transfer:       true,
+			Propose:        true,
+			Vote:           true,
+			CurEquiv:       true,
+			KeyWeight:      0,
+		},
+		{
+			PublicKey: helper.PublicKey{Single: &rKey2},
+			Quash:     true,
+			Transfer:  true,
+			Propose:   true,
+			Vote:      false,
+			KeyWeight: 1,
+		},
+	}
+
+	tokenData.RestrictedKeys, err = contract.CreateRestrictedKeys(config)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
 
 	txn, err := contract.CreateTokenTXN(nonceInfo, tokenData, publicKey, privateKey, baseFeeSymbol, baseFeeParts)
 

@@ -1,7 +1,6 @@
 package helper_test
 
 import (
-	"fmt"
 	"testing"
 
 	pb "github.com/ZeraVision/go-zera-network/grpc/protobuf"
@@ -145,8 +144,6 @@ func compareResult(t *testing.T, result *pb.PublicKey, expectedResult string) {
 	}
 
 	compareResult := transcode.HexEncode(binaryData)
-
-	fmt.Println(compareResult)
 
 	if compareResult != expectedResult {
 		t.Errorf("Expected result: %s, got: %s", expectedResult, compareResult)
