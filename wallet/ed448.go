@@ -73,9 +73,5 @@ func GenerateEd448(mnemonic string, hashAlg helper.HashType, keyType helper.KeyT
 
 	b58Private := transcode.Base58Encode(privateKey)
 
-	fmt.Println("Mnemonic:", mnemonic)
-	fmt.Println("Private Key (Base58):", b58Private)
-	fmt.Println("Public Key (Base58):", b58PublicKey)
-	fmt.Println("Address (B58):", b58Address)
 	return b58Private, b58PublicKey, b58Address, nil
 }
