@@ -46,7 +46,6 @@ type Stage struct {
 }
 
 func CreateGovernance(govType GovernanceTypeHelper, regularQuorum float64, fastQuorum *float64, allowedProposalContracts []string, allowedVotingContracts []string, votingThreshold float64, alwaysWinner *bool, allowMultiChoice bool) (*pb.Governance, error) {
-
 	// Convert regularQuorum to a whole number between 0-9999
 	if regularQuorum < 0 || regularQuorum > 100 {
 		return nil, fmt.Errorf("regularQuorum must be between 0 and 100")
@@ -126,5 +125,4 @@ func CreateGovernance(govType GovernanceTypeHelper, regularQuorum float64, fastQ
 	}
 
 	return gov, nil
-
 }

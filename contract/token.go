@@ -22,7 +22,7 @@ type TokenData struct {
 	Name               string                 // Name of the contract (ie ZERA)
 	Governance         *pb.Governance         // Governance configuration (ie staged, cycle, adaptive, staged, cycle, [empty])
 	RestrictedKeys     []*pb.RestrictedKey    // Restricted keys for the contract (ie empty (not suitable for most cases), other specicial permissions)
-	Denomination       pb.CoinDenomination    // How many 'parts' per coin there are (ie ZERA has 1_000_000_000 parts per coin)
+	Denomination       *pb.CoinDenomination   // How many 'parts' per coin there are (ie ZERA has 1_000_000_000 parts per coin)
 	MaxSupply          string                 // Maximum supply of the contract in denomination units (not full coins)
 	MaxSupplyRelease   []*pb.MaxSupplyRelease // An unlocking schedule
 	Premint            []*pb.PreMintWallet    // Wallets to immediately premint supply to
@@ -86,7 +86,7 @@ func CreateTokenTXN(nonceInfo nonce.NonceInfo, data *TokenData, publicKeyBase58 
 		Name:               data.Name,
 		Governance:         data.Governance,
 		RestrictedKeys:     data.RestrictedKeys,
-		CoinDenomination:   &data.Denomination,
+		CoinDenomination:   data.Denomination,
 		MaxSupply:          &data.MaxSupply,
 		MaxSupplyRelease:   data.MaxSupplyRelease,
 		PremintWallets:     data.Premint,

@@ -27,13 +27,20 @@ func ToBigFloat(val interface{}) *big.Float {
 		return big.NewFloat(float64(v))
 	case int64:
 		return big.NewFloat(float64(v))
+	case uint:
+		return big.NewFloat(float64(v))
+	case uint16:
+		return big.NewFloat(float64(v))
+	case uint32:
+		return big.NewFloat(float64(v))
+	case uint64:
+		return big.NewFloat(float64(v))
 	case float64:
 		return big.NewFloat(v)
 	case *float64:
 		if v == nil {
 			return big.NewFloat(1.0 / 1e18)
 		}
-
 		return big.NewFloat(*v)
 	case string:
 		bigFloatValue := new(big.Float)
@@ -78,12 +85,19 @@ func ToBigInt(val interface{}) *big.Int {
 		return big.NewInt(int64(v))
 	case int64:
 		return big.NewInt(v)
+	case uint:
+		return new(big.Int).SetUint64(uint64(v))
+	case uint16:
+		return new(big.Int).SetUint64(uint64(v))
+	case uint32:
+		return new(big.Int).SetUint64(uint64(v))
+	case uint64:
+		return new(big.Int).SetUint64(v)
 	case string:
 		bigIntValue := new(big.Int)
 		bigIntValue, success := bigIntValue.SetString(v, 10)
 		if !success {
-			var bigIntNullable *big.Int
-			return bigIntNullable
+			return nil
 		}
 		return bigIntValue
 	case *string:
@@ -106,7 +120,6 @@ func ToBigInt(val interface{}) *big.Int {
 		} else if v.Exp < 0 {
 			return nil // fractional numbers cannot be converted to big.Int
 		}
-
 		return bigInt
 	case json.Number:
 		bigIntValue := new(big.Int)
