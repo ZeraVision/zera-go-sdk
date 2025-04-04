@@ -1,7 +1,6 @@
 package contract
 
 import (
-	"fmt"
 	"math/big"
 
 	pb "github.com/ZeraVision/go-zera-network/grpc/protobuf"
@@ -27,12 +26,7 @@ func CreatePremint(premints []PremintConfig, parts *big.Int) ([]*pb.PreMintWalle
 
 		amountF := new(big.Float).Mul(big.NewFloat(premint.Amount), convert.ToBigFloat(parts))
 		amount := new(big.Int)
-		amount, accuracy := amountF.Int(amount)
-
-		if accuracy != big.Exact {
-			// Handle truncation or rounding
-			return nil, fmt.Errorf("premint amount %v has more precision than specified in the contract (ie specified 0.999999999999999999 when maximum precision is only 0.9999999)", amountF)
-		}
+		amount, _ = amountF.Int(amount)
 
 		premintResult = append(premintResult, &pb.PreMintWallet{
 			Address: addr,

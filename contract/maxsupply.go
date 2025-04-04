@@ -14,10 +14,7 @@ func CreateMaxSupply(maxSupply float64, parts *big.Int) (string, error) {
 	// Convert into parts
 	maxSupplyF := new(big.Float).Mul(big.NewFloat(maxSupply), convert.ToBigFloat(parts))
 	amount := new(big.Int)
-	amount, accuracy := maxSupplyF.Int(amount)
-	if accuracy != big.Exact {
-		return "", fmt.Errorf("max supply %v has more precision than specified in the contract (ie specified 0.999999999999999999 when maximum precision is only 0.9999999)", maxSupplyF)
-	}
+	amount, _ = maxSupplyF.Int(amount)
 
 	return amount.String(), nil
 }
@@ -35,10 +32,7 @@ func CreateMaxSupplyRelease(releaseConfig []ReleaseScheduleConfig, parts *big.In
 	for _, release := range releaseConfig {
 		releaseParts := new(big.Float).Mul(big.NewFloat(release.Amount), convert.ToBigFloat(parts))
 		releaseAmount := new(big.Int)
-		releaseAmount, accuracy := releaseParts.Int(releaseAmount)
-		if accuracy != big.Exact {
-			return nil, fmt.Errorf("max supply release amount %v has more precision than specified in the contract (ie specified 0.999999999999999999 when maximum precision is only 0.9999999)", releaseParts)
-		}
+		releaseAmount, _ = releaseParts.Int(releaseAmount)
 
 		maxSupplyRelease = append(maxSupplyRelease, &pb.MaxSupplyRelease{
 			ReleaseDate: release.ReleaseDate,

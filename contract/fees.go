@@ -37,20 +37,14 @@ func CreateContractFee(config ContractFeeConfig, parts *big.Int) (*pb.ContractFe
 	if config.Type == FeeFixed {
 		fee := new(big.Float).Mul(big.NewFloat(config.Fee), convert.ToBigFloat(parts))
 		feeInt := new(big.Int)
-		feeInt, accuracy := fee.Int(feeInt)
-		if accuracy != big.Exact {
-			return nil, fmt.Errorf("fee amount %v has more precision than specified in the contract (ie specified 0.999999999999999999 when maximum precision is only 0.9999999)", fee)
-		}
+		feeInt, _ = fee.Int(feeInt)
 
 		feeString = feeInt.String()
 	} else if config.Type == FeeCurrencyEquivalent || config.Type == FeePercentage {
 		// Scaled to 1e18 for network (0-100 scale * 1e16)
 		fee := new(big.Float).Mul(big.NewFloat(config.Fee), convert.ToBigFloat(1e16))
 		feeInt := new(big.Int)
-		feeInt, accuracy := fee.Int(feeInt)
-		if accuracy != big.Exact {
-			return nil, fmt.Errorf("fee amount %v has more precision than specified in the maximum precision scale (1e16)", fee)
-		}
+		feeInt, _ = fee.Int(feeInt)
 
 		feeString = feeInt.String()
 	}
@@ -58,20 +52,14 @@ func CreateContractFee(config ContractFeeConfig, parts *big.Int) (*pb.ContractFe
 	// Burn percent
 	burn := new(big.Float).Mul(big.NewFloat(config.Burn), convert.ToBigFloat(1e16))
 	burnInt := new(big.Int)
-	burnInt, accuracy := burn.Int(burnInt)
-	if accuracy != big.Exact {
-		return nil, fmt.Errorf("burn amount %v has more precision than specified in the maximum precision scale (1e16)", burn)
-	}
+	burnInt, _ = burn.Int(burnInt)
 
 	burnString = burnInt.String()
 
 	// Validator Percent
 	validator := new(big.Float).Mul(big.NewFloat(config.Validator), convert.ToBigFloat(1e16))
 	validatorInt := new(big.Int)
-	validatorInt, accuracy = validator.Int(validatorInt)
-	if accuracy != big.Exact {
-		return nil, fmt.Errorf("validator amount %v has more precision than specified in the maximum precision scale (1e16)", burn)
-	}
+	validatorInt, _ = validator.Int(validatorInt)
 
 	validatorString = validatorInt.String()
 
