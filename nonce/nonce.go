@@ -23,12 +23,17 @@ type NonceInfo struct {
 	Address       string           // required when useIndexer true
 	IndexerURL    string           // required when useIndexer true
 	Authorization string           // required when useIndexer true, Api-Key or Bearer
+	Override      uint64           // optional, if set, this nonce will be used instead of the one from the indexer or validator
 }
 
 // GetNonce retrieves the nonce either from the Indexer HTTP API or the Validator gRPC service.
 // If useIndexer is true, indexerURL and apiKey must be provided. Uses ZV indexer (higher reliability, multiple geo locations (for lower global latency))
 // If useIndexer is false, nonceReq and validatorAddr must be provided. Uses direct validator gRPC (lower reliability)
 func GetNonce(info NonceInfo) (uint64, error) {
+
+	if info.Override != 0 {
+		return info.Override, nil
+	}
 
 	if info.UseIndexer {
 		if info.IndexerURL == "" || info.Authorization == "" || info.Address == "" {
