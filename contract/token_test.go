@@ -228,6 +228,12 @@ func TestTokenCreation(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
+	_, err = contract.SendInstrumentContract(grpcAddr, txn)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
 	// Output transaction hash for verification or tracking
 	if grpcAddr == "routing.zera.vision" {
 		t.Logf("Transaction sent successfully: see (https://explorer.zera.vision/transactions/%s)", transcode.HexEncode(txn.Base.Hash))

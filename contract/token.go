@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"strings"
@@ -11,7 +12,10 @@ import (
 	"github.com/ZeraVision/zera-go-sdk/nonce"
 	"github.com/ZeraVision/zera-go-sdk/sign"
 	"github.com/ZeraVision/zera-go-sdk/transcode"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -138,4 +142,21 @@ func CreateTokenTXN(nonceInfo nonce.NonceInfo, data *TokenData, publicKeyBase58 
 	contractTxn.Base.Hash = hash
 
 	return contractTxn, nil
+}
+
+// SendInstrumentContract submits an instrument contract to the network via gRPC
+func SendInstrumentContract(grpcAddr string, txn *pb.InstrumentContract) (*emptypb.Empty, error) {
+	conn, err := grpc.NewClient(grpcAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	client := pb.NewTXNServiceClient(conn)
+	response, err := client.Contract(context.Background(), txn)
+	if err != nil {
+		return nil, fmt.Errorf("token transaction failed: %v", err)
+	}
+
+	return response, nil
 }
