@@ -17,10 +17,10 @@ func init() {
 func Test25519OnetoOne(t *testing.T) {
 	inputs := []transfer.Inputs{
 		{
-			B58Address:         "23ULwo87vyjEUtZZyKjgVa34b3VE7d6kfWY9MBDM8nVb",
+			B58Address:         "8ZfvifzSPMhhhivnH6NtaBXcmF3vsSaiB8KBULTetBcR",
 			KeyType:            helper.ED25519,
-			PublicKey:          "A_c_7rVZgQm5uPUvkpJDXo9L7hrPA2gcev9G2aKfDNZiKAvx",
-			PrivateKey:         "2fweChsECpmRDP5yFgJjoJi2PugxmGAoZcmYkr9kDqNKJGAUzm3DwCPKUq8ZTct3occco1reG2fishuDNchQF9vU",
+			PublicKey:          "A_c_FPXdqFTeqC3rHCaAAXmXbunb8C5BbRZEZNGjt23dAVo7",
+			PrivateKey:         "2ap5CkCekErkqJ4UuSGAW1BmRRRNr8hXaebudv1j8TY6mJMSsbnniakorFGmetE4aegsyQAD8WX1N8Q2Y45YEBDs",
 			Amount:             big.NewFloat(1.23456),
 			FeePercent:         100,
 			ContractFeePercent: nil,
@@ -36,10 +36,10 @@ func Test25519OnetoOne(t *testing.T) {
 func Test25519OnetoMany(t *testing.T) {
 	inputs := []transfer.Inputs{
 		{
-			B58Address:         "23ULwo87vyjEUtZZyKjgVa34b3VE7d6kfWY9MBDM8nVb",
+			B58Address:         "8ZfvifzSPMhhhivnH6NtaBXcmF3vsSaiB8KBULTetBcR",
 			KeyType:            helper.ED25519,
-			PublicKey:          "A_c_7rVZgQm5uPUvkpJDXo9L7hrPA2gcev9G2aKfDNZiKAvx",
-			PrivateKey:         "2fweChsECpmRDP5yFgJjoJi2PugxmGAoZcmYkr9kDqNKJGAUzm3DwCPKUq8ZTct3occco1reG2fishuDNchQF9vU",
+			PublicKey:          "A_c_FPXdqFTeqC3rHCaAAXmXbunb8C5BbRZEZNGjt23dAVo7",
+			PrivateKey:         "2ap5CkCekErkqJ4UuSGAW1BmRRRNr8hXaebudv1j8TY6mJMSsbnniakorFGmetE4aegsyQAD8WX1N8Q2Y45YEBDs",
 			Amount:             big.NewFloat(1.23456),
 			FeePercent:         100,
 			ContractFeePercent: nil,
@@ -56,10 +56,10 @@ func Test25519OnetoMany(t *testing.T) {
 func Test448OnetoOne(t *testing.T) {
 	inputs := []transfer.Inputs{
 		{
-			B58Address:         "AJKR2m2yepRZYLKKABGRuzM2ihnYmxcftkBiLdBoc9ix",
+			B58Address:         "Hv3KUwrmR8C8XVSxuJFJrQqeDixeDnakUTkUUMZkFCUS",
 			KeyType:            helper.ED448,
-			PublicKey:          "B_c_7epXSHxgXp6e3ogtddX68dZ7Ez6sa5xoKXV9UntbK65CB7tfCNEPV6U61bBaEcviCSFsXH6Cdr3rRD",
-			PrivateKey:         "DzRXgQkou2SQKcVY8enGwmhRYeudKeCJV6gKQ73o5BWpg7sGh4SmhidPtax9KigAuGYUctAYfSKS9L",
+			PublicKey:          "B_c_8TZAaoUWbGvkxaWdWBXJ3mVHXVXLDJgtbeexkBzj5ySjpru7yZvfuKwGGHt2gtFpQfQCaRnBPU43bV",
+			PrivateKey:         "HYkGjJY8hjEAxLe1UFzEni5mANwbvTquvTV6mgMT6Qp2Ee1CFYC8tVNfdqyJ9ZwnwsYRUwfMg15suW",
 			Amount:             big.NewFloat(1.23456),
 			FeePercent:         100,
 			ContractFeePercent: nil,
@@ -75,10 +75,10 @@ func Test448OnetoOne(t *testing.T) {
 func Test448OnetoMany(t *testing.T) {
 	inputs := []transfer.Inputs{
 		{
-			B58Address:         "AJKR2m2yepRZYLKKABGRuzM2ihnYmxcftkBiLdBoc9ix",
+			B58Address:         "Hv3KUwrmR8C8XVSxuJFJrQqeDixeDnakUTkUUMZkFCUS",
 			KeyType:            helper.ED448,
-			PublicKey:          "B_c_7epXSHxgXp6e3ogtddX68dZ7Ez6sa5xoKXV9UntbK65CB7tfCNEPV6U61bBaEcviCSFsXH6Cdr3rRD",
-			PrivateKey:         "DzRXgQkou2SQKcVY8enGwmhRYeudKeCJV6gKQ73o5BWpg7sGh4SmhidPtax9KigAuGYUctAYfSKS9L",
+			PublicKey:          "B_c_8TZAaoUWbGvkxaWdWBXJ3mVHXVXLDJgtbeexkBzj5ySjpru7yZvfuKwGGHt2gtFpQfQCaRnBPU43bV",
+			PrivateKey:         "HYkGjJY8hjEAxLe1UFzEni5mANwbvTquvTV6mgMT6Qp2Ee1CFYC8tVNfdqyJ9ZwnwsYRUwfMg15suW",
 			Amount:             big.NewFloat(1.23456),
 			FeePercent:         100,
 			ContractFeePercent: nil,
@@ -95,19 +95,19 @@ func Test448OnetoMany(t *testing.T) {
 func TestManytoOne(t *testing.T) {
 	inputs := []transfer.Inputs{
 		{
-			B58Address:         "23ULwo87vyjEUtZZyKjgVa34b3VE7d6kfWY9MBDM8nVb",
+			B58Address:         "8ZfvifzSPMhhhivnH6NtaBXcmF3vsSaiB8KBULTetBcR",
 			KeyType:            helper.ED25519,
-			PublicKey:          "A_c_7rVZgQm5uPUvkpJDXo9L7hrPA2gcev9G2aKfDNZiKAvx",
-			PrivateKey:         "2fweChsECpmRDP5yFgJjoJi2PugxmGAoZcmYkr9kDqNKJGAUzm3DwCPKUq8ZTct3occco1reG2fishuDNchQF9vU",
+			PublicKey:          "A_c_FPXdqFTeqC3rHCaAAXmXbunb8C5BbRZEZNGjt23dAVo7",
+			PrivateKey:         "2ap5CkCekErkqJ4UuSGAW1BmRRRNr8hXaebudv1j8TY6mJMSsbnniakorFGmetE4aegsyQAD8WX1N8Q2Y45YEBDs",
 			Amount:             big.NewFloat(1.23456),
 			FeePercent:         50,
 			ContractFeePercent: nil,
 		},
 		{
-			B58Address:         "AJKR2m2yepRZYLKKABGRuzM2ihnYmxcftkBiLdBoc9ix",
+			B58Address:         "Hv3KUwrmR8C8XVSxuJFJrQqeDixeDnakUTkUUMZkFCUS",
 			KeyType:            helper.ED448,
-			PublicKey:          "B_c_7epXSHxgXp6e3ogtddX68dZ7Ez6sa5xoKXV9UntbK65CB7tfCNEPV6U61bBaEcviCSFsXH6Cdr3rRD",
-			PrivateKey:         "DzRXgQkou2SQKcVY8enGwmhRYeudKeCJV6gKQ73o5BWpg7sGh4SmhidPtax9KigAuGYUctAYfSKS9L",
+			PublicKey:          "B_c_8TZAaoUWbGvkxaWdWBXJ3mVHXVXLDJgtbeexkBzj5ySjpru7yZvfuKwGGHt2gtFpQfQCaRnBPU43bV",
+			PrivateKey:         "HYkGjJY8hjEAxLe1UFzEni5mANwbvTquvTV6mgMT6Qp2Ee1CFYC8tVNfdqyJ9ZwnwsYRUwfMg15suW",
 			Amount:             big.NewFloat(1.23456),
 			FeePercent:         50,
 			ContractFeePercent: nil,
@@ -123,19 +123,19 @@ func TestManytoOne(t *testing.T) {
 func TestManytoMany(t *testing.T) {
 	inputs := []transfer.Inputs{
 		{
-			B58Address:         "23ULwo87vyjEUtZZyKjgVa34b3VE7d6kfWY9MBDM8nVb",
+			B58Address:         "8ZfvifzSPMhhhivnH6NtaBXcmF3vsSaiB8KBULTetBcR",
 			KeyType:            helper.ED25519,
-			PublicKey:          "A_c_7rVZgQm5uPUvkpJDXo9L7hrPA2gcev9G2aKfDNZiKAvx",
-			PrivateKey:         "2fweChsECpmRDP5yFgJjoJi2PugxmGAoZcmYkr9kDqNKJGAUzm3DwCPKUq8ZTct3occco1reG2fishuDNchQF9vU",
+			PublicKey:          "A_c_FPXdqFTeqC3rHCaAAXmXbunb8C5BbRZEZNGjt23dAVo7",
+			PrivateKey:         "2ap5CkCekErkqJ4UuSGAW1BmRRRNr8hXaebudv1j8TY6mJMSsbnniakorFGmetE4aegsyQAD8WX1N8Q2Y45YEBDs",
 			Amount:             big.NewFloat(1.23456),
 			FeePercent:         50,
 			ContractFeePercent: nil,
 		},
 		{
-			B58Address:         "AJKR2m2yepRZYLKKABGRuzM2ihnYmxcftkBiLdBoc9ix",
+			B58Address:         "Hv3KUwrmR8C8XVSxuJFJrQqeDixeDnakUTkUUMZkFCUS",
 			KeyType:            helper.ED448,
-			PublicKey:          "B_c_7epXSHxgXp6e3ogtddX68dZ7Ez6sa5xoKXV9UntbK65CB7tfCNEPV6U61bBaEcviCSFsXH6Cdr3rRD",
-			PrivateKey:         "DzRXgQkou2SQKcVY8enGwmhRYeudKeCJV6gKQ73o5BWpg7sGh4SmhidPtax9KigAuGYUctAYfSKS9L",
+			PublicKey:          "B_c_8TZAaoUWbGvkxaWdWBXJ3mVHXVXLDJgtbeexkBzj5ySjpru7yZvfuKwGGHt2gtFpQfQCaRnBPU43bV",
+			PrivateKey:         "HYkGjJY8hjEAxLe1UFzEni5mANwbvTquvTV6mgMT6Qp2Ee1CFYC8tVNfdqyJ9ZwnwsYRUwfMg15suW",
 			Amount:             big.NewFloat(1.23456),
 			FeePercent:         50,
 			ContractFeePercent: nil,

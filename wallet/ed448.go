@@ -23,6 +23,8 @@ func GenerateKeyPairEd448(seed []byte) ([]byte, []byte, error) {
 }
 
 // GenerateEd448 generates an Ed448 key pair and hashes the public key with the specified algorithm.
+
+// GenerateEd448 generates an Ed448 key pair and hashes the public key with the specified algorithm.
 func GenerateEd448(mnemonic string, hashAlg helper.HashType, keyType helper.KeyType) (string, string, string, error) {
 	if len(mnemonic) < 12 {
 		var err error
@@ -32,9 +34,16 @@ func GenerateEd448(mnemonic string, hashAlg helper.HashType, keyType helper.KeyT
 		}
 	}
 
-	// Use Blake2b to generate the seed deterministically from the mnemonic
-	hashed := blake2b.Sum512([]byte(mnemonic))
-	seed := hashed[:ed448.SeedSize]
+	// Derive the seed using libsodium-compatible BLAKE2b
+	hasher, err := blake2b.New(ed448.SeedSize, nil)
+	if err != nil {
+		return "", "", "", errors.New("failed to create BLAKE2b hasher")
+	}
+	_, err = hasher.Write([]byte(mnemonic))
+	if err != nil {
+		return "", "", "", errors.New("failed to hash mnemonic")
+	}
+	seed := hasher.Sum(nil)
 
 	privateKey, rawPublicKey, err := GenerateKeyPairEd448(seed)
 	if err != nil {

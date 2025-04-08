@@ -1,12 +1,12 @@
 package wallet
 
 import (
-	"crypto/sha256"
 	"errors"
 
 	"github.com/ZeraVision/zera-go-sdk/helper"
 	"github.com/ZeraVision/zera-go-sdk/transcode"
 	ed25519 "github.com/teserakt-io/golang-ed25519"
+	"golang.org/x/crypto/blake2b"
 )
 
 // GenerateKeyPairLibsodium-compatible: deterministically creates an Ed25519 keypair from a 32-byte seed.
@@ -31,8 +31,7 @@ func GenerateEd25519(mnemonic string, hashAlg helper.HashType, keyType helper.Ke
 		}
 	}
 
-	// Replace this with real Argon2 or other strong hashing if needed
-	seed := sha256.Sum256([]byte(mnemonic))
+	seed := blake2b.Sum256([]byte(mnemonic))
 
 	privateKey, rawPublicKey, err := GenerateKeyPairLibsodium(seed[:])
 	if err != nil {
