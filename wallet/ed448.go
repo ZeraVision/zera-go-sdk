@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
-	generichash "github.com/GoKillers/libsodium-go/cryptogenerichash"
 	"github.com/ZeraVision/zera-go-sdk/helper"
 	"github.com/ZeraVision/zn-wallet-manager/transcode"
 	"github.com/cloudflare/circl/sign/ed448"
+	"golang.org/x/crypto/blake2b"
 )
 
 // GenerateKeyPairEd448 generates an Ed448 key pair using circl.
@@ -16,7 +16,6 @@ func GenerateKeyPairEd448(seed []byte) ([]byte, []byte, error) {
 		return nil, nil, fmt.Errorf("seed must be exactly %d bytes", ed448.SeedSize)
 	}
 
-	// Generate private and public key
 	privateKey := ed448.NewKeyFromSeed(seed)
 	publicKey := privateKey.Public().(ed448.PublicKey)
 
@@ -28,17 +27,14 @@ func GenerateEd448(mnemonic string, hashAlg helper.HashType, keyType helper.KeyT
 	if len(mnemonic) < 12 {
 		var err error
 		mnemonic, err = GenerateRandomString(1000)
-
 		if err != nil {
 			return "", "", "", errors.New("failed to generate random entropy")
 		}
 	}
 
-	seed, retCode := generichash.CryptoGenericHash(ed448.SeedSize, []byte(mnemonic), nil)
-
-	if retCode != 0 {
-		return "", "", "", errors.New("libsodium: failed to generate seed")
-	}
+	// Use Blake2b to generate the seed deterministically from the mnemonic
+	hashed := blake2b.Sum512([]byte(mnemonic))
+	seed := hashed[:ed448.SeedSize]
 
 	privateKey, rawPublicKey, err := GenerateKeyPairEd448(seed)
 	if err != nil {
@@ -52,7 +48,6 @@ func GenerateEd448(mnemonic string, hashAlg helper.HashType, keyType helper.KeyT
 
 	b58PublicKey := transcode.Base58Encode(rawPublicKey)
 
-	// Find the index of the second underscore
 	underscoreCount := 0
 	secondUnderscoreIndex := -1
 	for i, b := range publicKey {
@@ -65,7 +60,6 @@ func GenerateEd448(mnemonic string, hashAlg helper.HashType, keyType helper.KeyT
 		}
 	}
 
-	// Prepend everything up to and including the second underscore to the b58PublicKey
 	if secondUnderscoreIndex != -1 {
 		prefix := string(publicKey[:secondUnderscoreIndex+1])
 		b58PublicKey = prefix + b58PublicKey

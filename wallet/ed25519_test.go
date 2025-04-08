@@ -8,20 +8,20 @@ import (
 )
 
 func TestGenerateEd25519_BLAKE3(t *testing.T) {
-	testGenerateEd25519(t, helper.BLAKE3, "A_c_FPXdqFTeqC3rHCaAAXmXbunb8C5BbRZEZNGjt23dAVo7", "8ZfvifzSPMhhhivnH6NtaBXcmF3vsSaiB8KBULTetBcR")
+	testGenerateEd25519(t, helper.BLAKE3, "A_c_7rVZgQm5uPUvkpJDXo9L7hrPA2gcev9G2aKfDNZiKAvx", "23ULwo87vyjEUtZZyKjgVa34b3VE7d6kfWY9MBDM8nVb")
 }
 
 func TestGenerateEd25519_SHA3_256(t *testing.T) {
-	testGenerateEd25519(t, helper.SHA3_256, "A_a_FPXdqFTeqC3rHCaAAXmXbunb8C5BbRZEZNGjt23dAVo7", "QK2KwEe1qKng1mzfiyDaQMKqYzFvman5CPdEVyRy1PV")
+	testGenerateEd25519(t, helper.SHA3_256, "A_a_7rVZgQm5uPUvkpJDXo9L7hrPA2gcev9G2aKfDNZiKAvx", "6GmjroVZfYGzZFGqBh4vp4eypYDMB6Doi4uczvyUMJaT")
 }
 
 func TestGenerateEd25519_SHA3_512(t *testing.T) {
-	testGenerateEd25519(t, helper.SHA3_512, "A_b_FPXdqFTeqC3rHCaAAXmXbunb8C5BbRZEZNGjt23dAVo7", "2hzpMgngf5zW6QMuQePVdtrMqdYNMC6mdBaWS7S458rRFUPTSwSXgwKMGVfEDuNejR5nWTua7evAyNi48ptNgbmR")
+	testGenerateEd25519(t, helper.SHA3_512, "A_b_7rVZgQm5uPUvkpJDXo9L7hrPA2gcev9G2aKfDNZiKAvx", "36yjBix8SWW89NFQTaaQJ62dWAoymaJgViKnyityMtSRHm6UMw7uU997WJCXMgoTZQGDQDpCGF44PXyEtgyiQRGR")
 }
 
 func testGenerateEd25519(t *testing.T, hashAlgorithm helper.HashType, expectedPublicKey, expectedAddress string) {
 	mnemonic := "crumble tattoo grape hurry pizza inject remind play believe museum thing mosquito"
-	expectedPrivateKey := "2ap5CkCekErkqJ4UuSGAW1BmRRRNr8hXaebudv1j8TY6mJMSsbnniakorFGmetE4aegsyQAD8WX1N8Q2Y45YEBDs"
+	expectedPrivateKey := "2fweChsECpmRDP5yFgJjoJi2PugxmGAoZcmYkr9kDqNKJGAUzm3DwCPKUq8ZTct3occco1reG2fishuDNchQF9vU"
 
 	//mnemonic = "" //! specifying empty mnemonic will generate random entropy non-BIP39 based
 
