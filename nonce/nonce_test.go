@@ -4,7 +4,9 @@ import (
 	"os"
 	"testing"
 
+	pb "github.com/ZeraVision/go-zera-network/grpc/protobuf"
 	"github.com/ZeraVision/zera-go-sdk/nonce"
+	"github.com/ZeraVision/zera-go-sdk/testvars"
 	"github.com/joho/godotenv"
 )
 
@@ -17,7 +19,7 @@ func init() {
 func TestGetNonce_UseIndexer(t *testing.T) {
 	nonceInfo := nonce.NonceInfo{
 		UseIndexer:    true,
-		Address:       NONCE_TEST_ADDR,
+		Addresses:     []string{NONCE_TEST_ADDR},
 		IndexerURL:    "https://indexer.zera.vision",
 		Authorization: os.Getenv("INDEXER_API_KEY"),
 	}
@@ -27,8 +29,10 @@ func TestGetNonce_UseIndexer(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	if nonceValue < 1 {
-		t.Fatalf("Expected nonce to be greater than 0, got %d", nonceValue)
+	for _, value := range nonceValue {
+		if value < 1 {
+			t.Fatalf("Expected nonce to be greater than 0, got %d", value)
+		}
 	}
 
 	t.Logf("Retrieved nonce from Indexer: %d", nonceValue)
@@ -43,8 +47,8 @@ func TestGetNonce_ValidatorMode(t *testing.T) {
 
 	nonceInfo := nonce.NonceInfo{
 		UseIndexer:    false,
-		NonceReq:      nonceReq,
-		ValidatorAddr: "routing.zera.vision:50051",
+		NonceReqs:     []*pb.NonceRequest{nonceReq},
+		ValidatorAddr: testvars.TEST_GRPC_ADDRESS,
 	}
 
 	nonceValue, err := nonce.GetNonce(nonceInfo)
@@ -52,8 +56,10 @@ func TestGetNonce_ValidatorMode(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	if nonceValue < 1 {
-		t.Fatalf("Expected nonce to be greater than 0, got %d", nonceValue)
+	for _, value := range nonceValue {
+		if value < 1 {
+			t.Fatalf("Expected nonce to be greater than 0, got %d", value)
+		}
 	}
 
 	t.Logf("Retrieved nonce from Validator: %d", nonceValue)

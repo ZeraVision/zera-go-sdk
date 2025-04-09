@@ -2,10 +2,12 @@ package transfer_test
 
 import (
 	"math/big"
-	"os"
 	"testing"
 
 	"github.com/ZeraVision/zera-go-sdk/helper"
+	"github.com/ZeraVision/zera-go-sdk/nonce"
+	"github.com/ZeraVision/zera-go-sdk/parts"
+	"github.com/ZeraVision/zera-go-sdk/testvars"
 	"github.com/ZeraVision/zera-go-sdk/transfer"
 	"github.com/joho/godotenv"
 )
@@ -30,7 +32,19 @@ func Test25519OnetoOne(t *testing.T) {
 		"b58addr1": big.NewFloat(1.23456),
 	}
 
-	testCoin(t, inputs, outputs, "$ZRA+0000", "$ZRA+0000", "1000000000")
+	nonceReqs, err := transfer.CreateNonceRequests(inputs)
+
+	if err != nil {
+		t.Fatalf("Error creating nonce requests: %s", err)
+	}
+
+	nonceInfo := nonce.NonceInfo{
+		UseIndexer:    false,
+		NonceReqs:     nonceReqs,
+		ValidatorAddr: testvars.TEST_GRPC_ADDRESS,
+	}
+
+	testCoin(t, nonceInfo, inputs, outputs, "$ZRA+0000", "$ZRA+0000", "1000000000")
 }
 
 func Test25519OnetoMany(t *testing.T) {
@@ -50,7 +64,19 @@ func Test25519OnetoMany(t *testing.T) {
 		"b58addr2": big.NewFloat(0.23456),
 	}
 
-	testCoin(t, inputs, outputs, "$ZRA+0000", "$ZRA+0000", "1000000000")
+	nonceReqs, err := transfer.CreateNonceRequests(inputs)
+
+	if err != nil {
+		t.Fatalf("Error creating nonce requests: %s", err)
+	}
+
+	nonceInfo := nonce.NonceInfo{
+		UseIndexer:    false,
+		NonceReqs:     nonceReqs,
+		ValidatorAddr: testvars.TEST_GRPC_ADDRESS,
+	}
+
+	testCoin(t, nonceInfo, inputs, outputs, "$ZRA+0000", "$ZRA+0000", "1000000000")
 }
 
 func Test448OnetoOne(t *testing.T) {
@@ -69,7 +95,19 @@ func Test448OnetoOne(t *testing.T) {
 		"b58addr1": big.NewFloat(1.23456),
 	}
 
-	testCoin(t, inputs, outputs, "$ZRA+0000", "$ZRA+0000", "1000000000")
+	nonceReqs, err := transfer.CreateNonceRequests(inputs)
+
+	if err != nil {
+		t.Fatalf("Error creating nonce requests: %s", err)
+	}
+
+	nonceInfo := nonce.NonceInfo{
+		UseIndexer:    false,
+		NonceReqs:     nonceReqs,
+		ValidatorAddr: testvars.TEST_GRPC_ADDRESS,
+	}
+
+	testCoin(t, nonceInfo, inputs, outputs, "$ZRA+0000", "$ZRA+0000", "1000000000")
 }
 
 func Test448OnetoMany(t *testing.T) {
@@ -89,7 +127,19 @@ func Test448OnetoMany(t *testing.T) {
 		"b58addr2": big.NewFloat(0.23456),
 	}
 
-	testCoin(t, inputs, outputs, "$ZRA+0000", "$ZRA+0000", "1000000000")
+	nonceReqs, err := transfer.CreateNonceRequests(inputs)
+
+	if err != nil {
+		t.Fatalf("Error creating nonce requests: %s", err)
+	}
+
+	nonceInfo := nonce.NonceInfo{
+		UseIndexer:    false,
+		NonceReqs:     nonceReqs,
+		ValidatorAddr: testvars.TEST_GRPC_ADDRESS,
+	}
+
+	testCoin(t, nonceInfo, inputs, outputs, "$ZRA+0000", "$ZRA+0000", "1000000000")
 }
 
 func TestManytoOne(t *testing.T) {
@@ -117,7 +167,19 @@ func TestManytoOne(t *testing.T) {
 		"b58addr1": big.NewFloat(2.46912),
 	}
 
-	testCoin(t, inputs, outputs, "$ZRA+0000", "$ZRA+0000", "1000000000")
+	nonceReqs, err := transfer.CreateNonceRequests(inputs)
+
+	if err != nil {
+		t.Fatalf("Error creating nonce requests: %s", err)
+	}
+
+	nonceInfo := nonce.NonceInfo{
+		UseIndexer:    false,
+		NonceReqs:     nonceReqs,
+		ValidatorAddr: testvars.TEST_GRPC_ADDRESS,
+	}
+
+	testCoin(t, nonceInfo, inputs, outputs, "$ZRA+0000", "$ZRA+0000", "1000000000")
 }
 
 func TestManytoMany(t *testing.T) {
@@ -146,22 +208,50 @@ func TestManytoMany(t *testing.T) {
 		"b58addr2": big.NewFloat(0.46912),
 	}
 
-	testCoin(t, inputs, outputs, "$ZRA+0000", "$ZRA+0000", "1000000000")
+	nonceReqs, err := transfer.CreateNonceRequests(inputs)
+
+	if err != nil {
+		t.Fatalf("Error creating nonce requests: %s", err)
+	}
+
+	nonceInfo := nonce.NonceInfo{
+		UseIndexer:    false,
+		NonceReqs:     nonceReqs,
+		ValidatorAddr: testvars.TEST_GRPC_ADDRESS,
+	}
+
+	testCoin(t, nonceInfo, inputs, outputs, "$ZRA+0000", "$ZRA+0000", "1000000000")
 }
 
-func testCoin(t *testing.T, inputs []transfer.Inputs, outputs map[string]*big.Float, symbol, baseFeeID, baseFeeAmountParts string) {
+func testCoin(t *testing.T, nonceInfo nonce.NonceInfo, inputs []transfer.Inputs, outputs map[string]*big.Float, symbol, baseFeeID, baseFeeAmountParts string) {
+
+	// // Using indexer
+	// partsInfo := parts.PartsInfo{
+	// 	Symbol:        symbol, // symbol specified here...
+	// 	UseIndexer:    true,
+	// 	IndexerUrl:    "https://indexer.zera.vision",
+	// 	Authorization: os.Getenv("INDEXER_API_KEY"),
+	// }
+
+	// Using validator
+	partsInfo := parts.PartsInfo{
+		Symbol:        symbol, // symbol specified here...
+		UseIndexer:    false,
+		ValidatorAddr: testvars.TEST_GRPC_ADDRESS,
+	}
+
 	// Indexer
-	txn, err := transfer.CreateCoinTxn(true, inputs, outputs, "https://indexer.zera.vision", os.Getenv("INDEXER_API_KEY"), symbol, baseFeeID, baseFeeAmountParts, nil, nil)
+	txn, err := transfer.CreateCoinTxn(nonceInfo, partsInfo, inputs, outputs, baseFeeID, baseFeeAmountParts, nil, nil)
 
 	// Validator
-	grpcAddr := "routing.zera.vision"
-	//txn, err := transfer.CreateCoinTxn(false, inputs, outputs, grpcAddr+ ":50051", "", symbol, baseFeeID, baseFeeAmountParts, nil, nil)
+
+	//txn, err := transfer.CreateCoinTxn(false, inputs, outputs, testvars.TEST_GRPC_ADDRESS, "", symbol, baseFeeID, baseFeeAmountParts, nil, nil)
 
 	if err != nil {
 		t.Errorf("Error creating transaction: %s", err)
 	}
 
-	_, err = transfer.SendCoinTXN(grpcAddr+":50052", txn)
+	_, err = transfer.SendCoinTXN(testvars.TEST_GRPC_ADDRESS+":50052", txn)
 
 	if err != nil {
 		t.Errorf("Error sending transaction: %s", err)

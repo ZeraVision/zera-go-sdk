@@ -4,8 +4,10 @@ import (
 	"math/big"
 	"testing"
 
+	pb "github.com/ZeraVision/go-zera-network/grpc/protobuf"
 	self "github.com/ZeraVision/zera-go-sdk/currencyequivalent"
 	"github.com/ZeraVision/zera-go-sdk/nonce"
+	"github.com/ZeraVision/zera-go-sdk/testvars"
 	"github.com/ZeraVision/zera-go-sdk/transcode"
 	"github.com/joho/godotenv"
 )
@@ -27,9 +29,6 @@ func TestSelfCurrencyEquivalent(t *testing.T) {
 	// 	Authorization: os.Getenv("INDEXER_API_KEY"),
 	// }
 
-	grpcAddr := "routing.zera.vision" // Change grpc addr as required
-	grpcAddr = "125.253.87.133"       // override
-
 	nonceReq, err := nonce.MakeNonceRequest(selfAddr)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -38,8 +37,8 @@ func TestSelfCurrencyEquivalent(t *testing.T) {
 	// Validator
 	nonceInfo := nonce.NonceInfo{
 		UseIndexer:    false,
-		NonceReq:      nonceReq,
-		ValidatorAddr: grpcAddr + ":50051",
+		NonceReqs:     []*pb.NonceRequest{nonceReq},
+		ValidatorAddr: testvars.TEST_GRPC_ADDRESS,
 	}
 
 	rate := big.NewFloat(1.01)                                           // usd
@@ -58,13 +57,13 @@ func TestSelfCurrencyEquivalent(t *testing.T) {
 		t.Fatalf("Error creating transaction: %s", err)
 	}
 
-	_, err = self.SendSelfCurrencyEquivalentTXN(grpcAddr+":50052", txn)
+	_, err = self.SendSelfCurrencyEquivalentTXN(testvars.TEST_GRPC_ADDRESS+":50052", txn)
 
 	if err != nil {
 		t.Fatalf("Error sending transaction: %s", err)
 	}
 
-	if grpcAddr == "routing.zera.vision" {
+	if testvars.TEST_GRPC_ADDRESS == "routing.zera.vision" {
 		t.Logf("Transaction sent successfully: see (https://explorer.zera.vision/transactions/%s)", transcode.HexEncode(txn.Base.Hash))
 	} else {
 		t.Logf("Transaction sent successfully: %s", transcode.HexEncode(txn.Base.Hash))

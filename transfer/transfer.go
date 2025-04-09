@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"strings"
 
 	pb "github.com/ZeraVision/go-zera-network/grpc/protobuf"
 	"github.com/ZeraVision/zera-go-sdk/helper"
@@ -28,27 +29,16 @@ type Inputs struct {
 	ContractFeePercent *float32   // 0-100 max 6 digits of precision
 }
 
-// CreateCoinTxn creates a CoinTXN protobuf message for a given set of inputs and outputs
-// useIndexer: true if using indexer, false if using validator
-// Inputs: [Key] = address, [Value] = Inputs struct
-// Outputs: [Key] = address, [Value] = amount of whole coins (not parts)
-// endpoint: url / addr of indexer or validator
-// apiKey: api key for the indexer (if using indexer)
-// symbol: contract symbol to send (ex $ZRA+0000)
-// baseFeeID: fee id for the base fee (ex $ZRA+0000)
-// baseFeeAmountParts: fee amount for the base fee in *parts* (ex 1000000000 = 1 ZRA)
-// contractFeeID: fee id for the contract fee (ex $ZRA+0000)
-// contractFeeAmountParts: fee amount for the contract fee in *parts* (ex 1000000000 = 1 ZRA)
-func CreateCoinTxn(useIndexer bool, inputs []Inputs, outputs map[string]*big.Float, endpoint string, authorization string, symbol, baseFeeID, baseFeeAmountParts string, contractFeeID, contractFeeAmountParts *string) (*pb.CoinTXN, error) {
+func CreateCoinTxn(nonceInfo nonce.NonceInfo, partsInfo parts.PartsInfo, inputs []Inputs, outputs map[string]*big.Float, baseFeeID, baseFeeAmountParts string, contractFeeID, contractFeeAmountParts *string) (*pb.CoinTXN, error) {
 
-	parts, err := parts.GetParts(useIndexer, symbol, endpoint, authorization)
+	parts, err := parts.GetParts(partsInfo)
 
 	if err != nil {
 		return nil, fmt.Errorf("could not get parts: %v", err)
 	}
 
 	// Step 1: Process Inputs
-	inputTransfers, auth, keys, totalInput, err := processInputs(useIndexer, inputs, parts, endpoint, authorization)
+	inputTransfers, auth, keys, totalInput, err := processInputs(nonceInfo, inputs, parts)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +64,7 @@ func CreateCoinTxn(useIndexer bool, inputs []Inputs, outputs map[string]*big.Flo
 	txn := &pb.CoinTXN{
 		Auth:              transferAuth,
 		Base:              txnBase,
-		ContractId:        symbol,
+		ContractId:        partsInfo.Symbol,
 		InputTransfers:    inputTransfers,
 		OutputTransfers:   outputTransfers,
 		ContractFeeId:     contractFeeID,
@@ -116,14 +106,14 @@ type authTracking struct {
 // Helper Function: Process Inputs
 // useIndexer - true if using indexer, false if using validator
 // nonceEndpoint - url / addr of indexer or validator
-func processInputs(useIndexer bool, inputs []Inputs, parts *big.Int, nonceEndpoint string, authorization string) ([]*pb.InputTransfers, []authTracking, map[string]keyTracking, *big.Float, error) {
+func processInputs(nonceInfo nonce.NonceInfo, inputs []Inputs, parts *big.Int) ([]*pb.InputTransfers, []authTracking, map[string]keyTracking, *big.Float, error) {
 	var inputTransfers []*pb.InputTransfers
 	var auth []authTracking
 	keys := map[string]keyTracking{}
 	totalInput := big.NewFloat(0)
 	index := uint64(0)
 
-	for _, input := range inputs {
+	for i, input := range inputs {
 		_, _, pubKeyByte, err := transcode.Base58DecodePublicKey(input.PublicKey)
 		if err != nil {
 			return nil, nil, nil, nil, fmt.Errorf("could not decode public key: %v", err)
@@ -137,32 +127,6 @@ func processInputs(useIndexer bool, inputs []Inputs, parts *big.Int, nonceEndpoi
 			FeePercent: uint32(input.FeePercent * 1_000_000),
 		})
 
-		var nonceInfo nonce.NonceInfo
-		if useIndexer {
-			if authorization == "" {
-				return nil, nil, nil, nil, fmt.Errorf("authorization is required when useIndexer is true")
-			}
-			nonceInfo = nonce.NonceInfo{
-				UseIndexer:    true,
-				Address:       input.B58Address,
-				IndexerURL:    nonceEndpoint,
-				Authorization: authorization,
-			}
-
-		} else {
-			nonceReq, err := nonce.MakeNonceRequest(input.B58Address)
-
-			if err != nil {
-				return nil, nil, nil, nil, fmt.Errorf("could not create nonce request: %v", err)
-			}
-
-			nonceInfo = nonce.NonceInfo{
-				UseIndexer:    false,
-				NonceReq:      nonceReq,
-				ValidatorAddr: nonceEndpoint,
-			}
-		}
-
 		nonce, err := nonce.GetNonce(nonceInfo)
 
 		if err != nil {
@@ -172,7 +136,7 @@ func processInputs(useIndexer bool, inputs []Inputs, parts *big.Int, nonceEndpoi
 		auth = append(auth, authTracking{
 			PublicKeyBytes: pubKeyByte,
 			Signature:      nil,
-			Nonce:          nonce,
+			Nonce:          nonce[i],
 		})
 
 		keys[transcode.Base58Encode(pubKeyByte)] = keyTracking{
@@ -252,6 +216,10 @@ func signTransaction(txn *pb.CoinTXN, keys map[string]keyTracking) (*pb.CoinTXN,
 }
 
 func SendCoinTXN(grpcAddr string, txn *pb.CoinTXN) (*emptypb.Empty, error) {
+	if !strings.Contains(grpcAddr, ":") {
+		grpcAddr += ":50052"
+	}
+
 	// Create a gRPC connection to the server
 	conn, err := grpc.NewClient(grpcAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -269,4 +237,18 @@ func SendCoinTXN(grpcAddr string, txn *pb.CoinTXN) (*emptypb.Empty, error) {
 	}
 
 	return response, nil
+}
+
+func CreateNonceRequests(inputs []Inputs) ([]*pb.NonceRequest, error) {
+	var nonceReqs []*pb.NonceRequest
+
+	for _, input := range inputs {
+		nonceReq, err := nonce.MakeNonceRequest(input.B58Address)
+		if err != nil {
+			return nil, fmt.Errorf("error creating nonce request for address %s: %v", input.B58Address, err)
+		}
+		nonceReqs = append(nonceReqs, nonceReq)
+	}
+
+	return nonceReqs, nil
 }

@@ -4,10 +4,12 @@ import (
 	"testing"
 	"time"
 
+	pb "github.com/ZeraVision/go-zera-network/grpc/protobuf"
 	"github.com/ZeraVision/zera-go-sdk/contract"
 	"github.com/ZeraVision/zera-go-sdk/convert"
 	"github.com/ZeraVision/zera-go-sdk/helper"
 	"github.com/ZeraVision/zera-go-sdk/nonce"
+	"github.com/ZeraVision/zera-go-sdk/testvars"
 	"github.com/ZeraVision/zera-go-sdk/transcode"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -27,14 +29,11 @@ func TestTokenCreation(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	// For this demo we will get the nonce directly from a validator, but other services (ie ZV's indexer) can also provide this function
-	grpcAddr := "routing.zera.vision" // and/or other validators
-
 	// Configure nonce resolution through validator
 	nonceInfo := nonce.NonceInfo{
 		UseIndexer:    false,
-		NonceReq:      nonceReq,
-		ValidatorAddr: grpcAddr + ":50051",
+		NonceReqs:     []*pb.NonceRequest{nonceReq},
+		ValidatorAddr: testvars.TEST_GRPC_ADDRESS,
 	}
 
 	// Fee configuration
@@ -228,14 +227,14 @@ func TestTokenCreation(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	_, err = contract.SendInstrumentContract(grpcAddr, txn)
+	_, err = contract.SendInstrumentContract(testvars.TEST_GRPC_ADDRESS, txn)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
 	// Output transaction hash for verification or tracking
-	if grpcAddr == "routing.zera.vision" {
+	if testvars.TEST_GRPC_ADDRESS == "routing.zera.vision" {
 		t.Logf("Transaction sent successfully: see (https://explorer.zera.vision/transactions/%s)", transcode.HexEncode(txn.Base.Hash))
 	} else {
 		t.Logf("Transaction sent successfully: %s", transcode.HexEncode(txn.Base.Hash))
