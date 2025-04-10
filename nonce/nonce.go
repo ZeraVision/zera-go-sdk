@@ -116,9 +116,10 @@ func GetNonce(info NonceInfo) ([]uint64, error) {
 		if err != nil {
 			// If first time
 			if strings.Contains(err.Error(), "does not exist") {
-				return []uint64{}, nil
+				response = &pb.NonceResponse{Nonce: 0}
+			} else {
+				return []uint64{}, fmt.Errorf("nonce request failed: %w", err)
 			}
-			return []uint64{}, fmt.Errorf("nonce request failed: %w", err)
 		}
 
 		nonceRet = append(nonceRet, response.GetNonce()+1)
