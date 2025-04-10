@@ -16,7 +16,14 @@ func init() {
 }
 
 func TestGetParts_UseIndexer(t *testing.T) {
-	parts, err := parts.GetParts(true, SAMPLE_SYMBOL, "https://indexer.zera.vision", os.Getenv("INDEXER_API_KEY")) // can use api key or bearer token
+	partsInfo := parts.PartsInfo{
+		Symbol:        SAMPLE_SYMBOL,
+		UseIndexer:    true,
+		IndexerUrl:    "https://indexer.zera.vision",
+		Authorization: os.Getenv("INDEXER_API_KEY"),
+	}
+
+	parts, err := parts.GetParts(partsInfo) // can use api key or bearer token
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}

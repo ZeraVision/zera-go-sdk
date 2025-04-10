@@ -52,6 +52,10 @@ func CreateMintTxn(nonceInfo nonce.NonceInfo, symbol string, amount string, reci
 		return nil, fmt.Errorf("failed to get nonce: %v", err)
 	}
 
+	if len(nonce) != 1 {
+		return nil, fmt.Errorf("expected exactly one nonce, got %d", len(nonce))
+	}
+
 	// Step 3: Create BaseTXN
 	base := &pb.BaseTXN{
 		PublicKey: &pb.PublicKey{
@@ -60,7 +64,7 @@ func CreateMintTxn(nonceInfo nonce.NonceInfo, symbol string, amount string, reci
 		FeeId:     feeID,
 		FeeAmount: feeAmountParts,
 		Timestamp: timestamppb.New(time.Now().UTC()),
-		Nonce:     nonce,
+		Nonce:     nonce[0],
 	}
 
 	// Step 4: Construct MintTXN
@@ -126,6 +130,10 @@ func CreateMintTxn(nonceInfo nonce.NonceInfo, symbol string, amount string, reci
 
 // SendMintTXN submits a MintTXN to the network via gRPC
 func SendMintTXN(grpcAddr string, txn *pb.MintTXN) (*emptypb.Empty, error) {
+	if !strings.Contains(grpcAddr, ":") {
+		grpcAddr += ":50052"
+	}
+
 	conn, err := grpc.NewClient(grpcAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err

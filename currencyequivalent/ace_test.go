@@ -5,8 +5,10 @@ import (
 	"os"
 	"testing"
 
+	pb "github.com/ZeraVision/go-zera-network/grpc/protobuf"
 	ace "github.com/ZeraVision/zera-go-sdk/currencyequivalent"
 	"github.com/ZeraVision/zera-go-sdk/nonce"
+	"github.com/ZeraVision/zera-go-sdk/testvars"
 	"github.com/ZeraVision/zera-go-sdk/transcode"
 	"github.com/joho/godotenv"
 )
@@ -29,9 +31,6 @@ func TestAce(t *testing.T) {
 	// 	Authorization: os.Getenv("INDEXER_API_KEY"),
 	// }
 
-	grpcAddr := "routing.zera.vision" // Change grpc addr as required
-	grpcAddr = "125.253.87.133"       // override
-
 	nonceReq, err := nonce.MakeNonceRequest(aceAddr)
 
 	if err != nil {
@@ -41,8 +40,8 @@ func TestAce(t *testing.T) {
 	// Validator
 	nonceInfo := nonce.NonceInfo{
 		UseIndexer:    false,
-		NonceReq:      nonceReq,
-		ValidatorAddr: grpcAddr + ":50051",
+		NonceReqs:     []*pb.NonceRequest{nonceReq},
+		ValidatorAddr: testvars.TEST_GRPC_ADDRESS,
 	}
 
 	rate := big.NewFloat(123.456)                                                    // usd
@@ -66,13 +65,13 @@ func TestAce(t *testing.T) {
 		t.Fatalf("Error creating transaction: %s", err)
 	}
 
-	_, err = ace.SendAceTXN(grpcAddr+":50052", txn)
+	_, err = ace.SendAceTXN(testvars.TEST_GRPC_ADDRESS+":50052", txn)
 
 	if err != nil {
 		t.Fatalf("Error sending transaction: %s", err)
 	}
 
-	if grpcAddr == "routing.zera.vision" {
+	if testvars.TEST_GRPC_ADDRESS == "routing.zera.vision" {
 		t.Logf("Transaction sent successfully: see (https://explorer.zera.vision/transactions/%s)", transcode.HexEncode(txn.Base.Hash))
 	} else {
 		t.Logf("Transaction sent successfully: %s", transcode.HexEncode(txn.Base.Hash))

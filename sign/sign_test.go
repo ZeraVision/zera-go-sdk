@@ -2,10 +2,11 @@ package sign_test
 
 import (
 	"math/big"
-	"os"
 	"testing"
 
 	"github.com/ZeraVision/zera-go-sdk/helper"
+	"github.com/ZeraVision/zera-go-sdk/nonce"
+	"github.com/ZeraVision/zera-go-sdk/parts"
 	"github.com/ZeraVision/zera-go-sdk/sign"
 	"github.com/ZeraVision/zera-go-sdk/transfer"
 	"github.com/joho/godotenv"
@@ -41,14 +42,22 @@ func testSignature(t *testing.T, address, testPublic, testPrivate string, keyTyp
 
 	outputs["outputAddr1"] = big.NewFloat(1.01)
 
-	symbol := "$ZRA+0000"
 	baseFeeID := "$ZRA+0000"
 	baseFeeAmountParts := "1000000000" // 1 zra
 
+	nonceInfo := nonce.NonceInfo{
+		Override: []uint64{5}, // to test the signature this doesnt need to be valid. See nonce_test for usage
+	}
+
+	partsInfo := parts.PartsInfo{
+		Symbol:   "$ZRA+0000",            //* symbol specified here...
+		Override: big.NewInt(1000000000), // to test the signature this doesnt need to be valid. See nonce_test for usage
+	}
+
 	// via indexer
-	txn, err := transfer.CreateCoinTxn(true, inputs, outputs, "https://indexer.zera.vision", os.Getenv("INDEXER_API_KEY"), symbol, baseFeeID, baseFeeAmountParts, nil, nil)
+	txn, err := transfer.CreateCoinTxn(nonceInfo, partsInfo, inputs, outputs, baseFeeID, baseFeeAmountParts, nil, nil)
 	// via validator
-	//txn, err := transfer.CreateCoinTxn(false, inputs, outputs, "routing.zera.vision:50051", "", symbol, baseFeeID, baseFeeAmountParts, nil, nil)
+	//txn, err := transfer.CreateCoinTxn(false, inputs, outputs, testvars.TEST_GRPC_ADDR, "", symbol, baseFeeID, baseFeeAmountParts, nil, nil)
 
 	if err != nil {
 		t.Errorf("Error creating transaction: %s", err)

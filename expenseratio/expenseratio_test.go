@@ -3,8 +3,10 @@ package expenseratio_test
 import (
 	"testing"
 
+	pb "github.com/ZeraVision/go-zera-network/grpc/protobuf"
 	"github.com/ZeraVision/zera-go-sdk/expenseratio"
 	"github.com/ZeraVision/zera-go-sdk/nonce"
+	"github.com/ZeraVision/zera-go-sdk/testvars"
 	"github.com/ZeraVision/zera-go-sdk/transcode"
 	"github.com/joho/godotenv"
 )
@@ -21,7 +23,7 @@ func TestExpenseRatio(t *testing.T) {
 	// Indexer
 	// nonceInfo := nonce.NonceInfo{
 	// 	UseIndexer:    true,
-	// 	Address:       mintFromAddr,
+	// 	Addresses:       []string{mintFromAddr},
 	// 	IndexerURL:    "https://indexer.zera.vision",
 	// 	Authorization: os.Getenv("INDEXER_API_KEY"),
 	// }
@@ -31,14 +33,11 @@ func TestExpenseRatio(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	grpcAddr := "routing.zera.vision" // Change grpc addr as required
-	grpcAddr = "125.253.87.133"       // override
-
 	// Validator
 	nonceInfo := nonce.NonceInfo{
 		UseIndexer:    false,
-		NonceReq:      nonceReq,
-		ValidatorAddr: grpcAddr + ":50051",
+		NonceReqs:     []*pb.NonceRequest{nonceReq},
+		ValidatorAddr: testvars.TEST_GRPC_ADDRESS,
 	}
 
 	symbol := "$BENCHY+0000"
@@ -56,13 +55,13 @@ func TestExpenseRatio(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	_, err = expenseratio.SendExpenseRatioTXN(grpcAddr+":50052", txn)
+	_, err = expenseratio.SendExpenseRatioTXN(testvars.TEST_GRPC_ADDRESS+":50052", txn)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	if grpcAddr == "routing.zera.vision" {
+	if testvars.TEST_GRPC_ADDRESS == "routing.zera.vision" {
 		t.Logf("Transaction sent successfully: see (https://explorer.zera.vision/transactions/%s)", transcode.HexEncode(txn.Base.Hash))
 	} else {
 		t.Logf("Transaction sent successfully: %s", transcode.HexEncode(txn.Base.Hash))

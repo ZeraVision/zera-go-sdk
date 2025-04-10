@@ -55,6 +55,10 @@ func CreateTokenTXN(nonceInfo nonce.NonceInfo, data *TokenData, publicKeyBase58 
 		return nil, fmt.Errorf("failed to get nonce: %v", err)
 	}
 
+	if len(nonce) != 1 {
+		return nil, fmt.Errorf("expected exactly one nonce, got %d", len(nonce))
+	}
+
 	// Step 2: Create BaseTXN
 	base := &pb.BaseTXN{
 		PublicKey: &pb.PublicKey{
@@ -63,7 +67,7 @@ func CreateTokenTXN(nonceInfo nonce.NonceInfo, data *TokenData, publicKeyBase58 
 		FeeId:     feeID,
 		FeeAmount: feeAmountParts,
 		Timestamp: timestamppb.New(time.Now().UTC()),
-		Nonce:     nonce,
+		Nonce:     nonce[0],
 	}
 
 	var startCurequivStr *string
@@ -146,6 +150,11 @@ func CreateTokenTXN(nonceInfo nonce.NonceInfo, data *TokenData, publicKeyBase58 
 
 // SendInstrumentContract submits an instrument contract to the network via gRPC
 func SendInstrumentContract(grpcAddr string, txn *pb.InstrumentContract) (*emptypb.Empty, error) {
+
+	if !strings.Contains(grpcAddr, ":") {
+		grpcAddr += ":50052"
+	}
+
 	conn, err := grpc.NewClient(grpcAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err

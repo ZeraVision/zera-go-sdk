@@ -3,8 +3,10 @@ package mint_test
 import (
 	"testing"
 
+	pb "github.com/ZeraVision/go-zera-network/grpc/protobuf"
 	"github.com/ZeraVision/zera-go-sdk/mint"
 	"github.com/ZeraVision/zera-go-sdk/nonce"
+	"github.com/ZeraVision/zera-go-sdk/testvars"
 	"github.com/ZeraVision/zera-go-sdk/transcode"
 	"github.com/joho/godotenv"
 )
@@ -44,14 +46,11 @@ func testMint(t *testing.T, mintFromAddr, publicKey, privateKey string) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	grpcAddr := "routing.zera.vision" // Change grpc addr as required
-	grpcAddr = "125.253.87.133"       // override
-
 	// Validator
 	nonceInfo := nonce.NonceInfo{
 		UseIndexer:    false,
-		NonceReq:      nonceReq,
-		ValidatorAddr: grpcAddr + ":50051",
+		NonceReqs:     []*pb.NonceRequest{nonceReq},
+		ValidatorAddr: testvars.TEST_GRPC_ADDRESS,
 	}
 
 	// Random addr for demo purposes
@@ -68,13 +67,13 @@ func testMint(t *testing.T, mintFromAddr, publicKey, privateKey string) {
 	}
 
 	// Change grpc addr as required
-	_, err = mint.SendMintTXN(grpcAddr+":50052", txn)
+	_, err = mint.SendMintTXN(testvars.TEST_GRPC_ADDRESS+":50052", txn)
 
 	if err != nil {
 		t.Errorf("Error sending transaction: %s", err)
 	}
 
-	if grpcAddr == "routing.zera.vision" {
+	if testvars.TEST_GRPC_ADDRESS == "routing.zera.vision" {
 		t.Logf("Transaction sent successfully: see (https://explorer.zera.vision/transactions/%s)", transcode.HexEncode(txn.Base.Hash))
 	} else {
 		t.Logf("Transaction sent successfully: %s", transcode.HexEncode(txn.Base.Hash))

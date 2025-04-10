@@ -46,6 +46,10 @@ func ExpenseRatioTxn(nonceInfo nonce.NonceInfo, symbol string, calledAddrs []str
 		return nil, fmt.Errorf("failed to get nonce: %v", err)
 	}
 
+	if len(nonce) != 1 {
+		return nil, fmt.Errorf("expected exactly one nonce, got %d", len(nonce))
+	}
+
 	// Step 3: Create BaseTXN
 	base := &pb.BaseTXN{
 		PublicKey: &pb.PublicKey{
@@ -54,7 +58,7 @@ func ExpenseRatioTxn(nonceInfo nonce.NonceInfo, symbol string, calledAddrs []str
 		FeeId:     feeID,
 		FeeAmount: feeAmountParts,
 		Timestamp: timestamppb.New(time.Now().UTC()),
-		Nonce:     nonce,
+		Nonce:     nonce[0],
 	}
 
 	// Step 4: Construct expense ratio transaction
@@ -120,6 +124,10 @@ func ExpenseRatioTxn(nonceInfo nonce.NonceInfo, symbol string, calledAddrs []str
 
 // SendExpenseRatioTXN submits a ExpenseRatioTXN to the network via gRPC
 func SendExpenseRatioTXN(grpcAddr string, txn *pb.ExpenseRatioTXN) (*emptypb.Empty, error) {
+	if !strings.Contains(grpcAddr, ":") {
+		grpcAddr += ":50052"
+	}
+
 	conn, err := grpc.NewClient(grpcAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err

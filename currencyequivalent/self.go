@@ -36,6 +36,10 @@ func CreateSelfCurrencyEquivalentTxn(nonceInfo nonce.NonceInfo, data []SelfData,
 		return nil, fmt.Errorf("failed to get nonce: %v", err)
 	}
 
+	if len(nonce) != 1 {
+		return nil, fmt.Errorf("expected exactly one nonce, got %d", len(nonce))
+	}
+
 	// Step 2: Create BaseTXN
 	base := &pb.BaseTXN{
 		PublicKey: &pb.PublicKey{
@@ -44,7 +48,7 @@ func CreateSelfCurrencyEquivalentTxn(nonceInfo nonce.NonceInfo, data []SelfData,
 		FeeId:     feeID,
 		FeeAmount: feeAmountParts,
 		Timestamp: timestamppb.New(time.Now().UTC()),
-		Nonce:     nonce,
+		Nonce:     nonce[0],
 	}
 
 	var curEquiv []*pb.CurrencyEquiv
@@ -116,6 +120,10 @@ func CreateSelfCurrencyEquivalentTxn(nonceInfo nonce.NonceInfo, data []SelfData,
 }
 
 func SendSelfCurrencyEquivalentTXN(grpcAddr string, txn *pb.SelfCurrencyEquiv) (*emptypb.Empty, error) {
+	if !strings.Contains(grpcAddr, ":") {
+		grpcAddr += ":50052"
+	}
+
 	conn, err := grpc.NewClient(grpcAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err

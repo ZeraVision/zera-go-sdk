@@ -39,6 +39,10 @@ func CreateAceTxn(nonceInfo nonce.NonceInfo, data []AceData, publicKeyBase58 str
 		return nil, fmt.Errorf("failed to get nonce: %v", err)
 	}
 
+	if len(nonce) != 1 {
+		return nil, fmt.Errorf("expected exactly one nonce, got %d", len(nonce))
+	}
+
 	// Step 2: Create BaseTXN
 	base := &pb.BaseTXN{
 		PublicKey: &pb.PublicKey{
@@ -47,7 +51,7 @@ func CreateAceTxn(nonceInfo nonce.NonceInfo, data []AceData, publicKeyBase58 str
 		FeeId:     feeID,
 		FeeAmount: feeAmountParts,
 		Timestamp: timestamppb.New(time.Now().UTC()),
-		Nonce:     nonce,
+		Nonce:     nonce[0],
 	}
 
 	var curEquiv []*pb.CurrencyEquiv
@@ -122,6 +126,11 @@ func CreateAceTxn(nonceInfo nonce.NonceInfo, data []AceData, publicKeyBase58 str
 }
 
 func SendAceTXN(grpcAddr string, txn *pb.AuthorizedCurrencyEquiv) (*emptypb.Empty, error) {
+
+	if !strings.Contains(grpcAddr, ":") {
+		grpcAddr += ":50052"
+	}
+
 	conn, err := grpc.NewClient(grpcAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
