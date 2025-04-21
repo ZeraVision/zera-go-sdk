@@ -10,7 +10,6 @@ import (
 	"github.com/ZeraVision/zera-go-sdk/helper"
 	"github.com/ZeraVision/zera-go-sdk/nonce"
 	"github.com/ZeraVision/zera-go-sdk/parts"
-	"github.com/ZeraVision/zera-go-sdk/sign"
 	"github.com/ZeraVision/zera-go-sdk/transcode"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -203,7 +202,7 @@ func signTransaction(txn *pb.CoinTXN, keys map[string]keyTracking) (*pb.CoinTXN,
 
 	for _, auth := range txn.Auth.PublicKey {
 		if key, ok := keys[transcode.Base58Encode(auth.Single)]; ok {
-			signature, err := sign.Sign(key.PrivateKey, txnBytes, key.KeyType)
+			signature, err := helper.Sign(key.PrivateKey, txnBytes, key.KeyType)
 			if err != nil {
 				return nil, fmt.Errorf("could not sign transaction: %v", err)
 			}
