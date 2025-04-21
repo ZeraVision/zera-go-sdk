@@ -1,4 +1,4 @@
-package sign_test
+package helper_test
 
 import (
 	"math/big"
@@ -7,7 +7,6 @@ import (
 	"github.com/ZeraVision/zera-go-sdk/helper"
 	"github.com/ZeraVision/zera-go-sdk/nonce"
 	"github.com/ZeraVision/zera-go-sdk/parts"
-	"github.com/ZeraVision/zera-go-sdk/sign"
 	"github.com/ZeraVision/zera-go-sdk/transfer"
 	"github.com/joho/godotenv"
 	"google.golang.org/protobuf/proto"
@@ -75,7 +74,7 @@ func testSignature(t *testing.T, address, testPublic, testPrivate string, keyTyp
 		t.Errorf("Error marshalling transaction: %s", err)
 	}
 
-	ok, err := sign.Verify(testPublic, txnBytes, signature)
+	ok, err := helper.Verify(testPublic, txnBytes, signature)
 
 	if err != nil {
 		t.Errorf("Error verifying signature: %s", err)

@@ -10,7 +10,6 @@ import (
 	pb "github.com/ZeraVision/go-zera-network/grpc/protobuf"
 	"github.com/ZeraVision/zera-go-sdk/helper"
 	"github.com/ZeraVision/zera-go-sdk/nonce"
-	"github.com/ZeraVision/zera-go-sdk/sign"
 	"github.com/ZeraVision/zera-go-sdk/transcode"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -126,7 +125,7 @@ func CreateTokenTXN(nonceInfo nonce.NonceInfo, data *TokenData, publicKeyBase58 
 		return nil, fmt.Errorf("unknown key type for public key: %s", publicKeyBase58)
 	}
 
-	signature, err := sign.Sign(privateKeyBase58, byteDataNoSig, keyType)
+	signature, err := helper.Sign(privateKeyBase58, byteDataNoSig, keyType)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign contract transaction: %v", err)
