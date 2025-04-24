@@ -15,6 +15,10 @@ func Sign(privateKeyBase58 string, payload []byte, keyType KeyType) ([]byte, err
 		return nil, errors.New("payload cannot be empty")
 	}
 
+	if keyType == SPECIAL {
+		return nil, nil
+	}
+
 	privateKey, err := transcode.Base58Decode(privateKeyBase58)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode private key: %v", err)

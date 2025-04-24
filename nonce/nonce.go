@@ -30,7 +30,6 @@ type NonceInfo struct {
 // If useIndexer is true, indexerURL and apiKey must be provided. Uses ZV indexer (higher reliability, multiple geo locations (for lower global latency))
 // If useIndexer is false, nonceReq and validatorAddr must be provided. Uses direct validator gRPC (lower reliability)
 func GetNonce(info NonceInfo) ([]uint64, error) {
-
 	if len(info.Override) > 0 {
 		return info.Override, nil
 	}
@@ -50,6 +49,12 @@ func GetNonce(info NonceInfo) ([]uint64, error) {
 		client := &http.Client{Transport: tr}
 
 		for _, addr := range info.Addresses {
+
+			// default for gov addr -- nonce ignored in processing
+			if strings.HasPrefix(addr, "gov_") {
+				nonceRet = append(nonceRet, 0)
+				continue
+			}
 
 			url := fmt.Sprintf("%s/store?requestType=getNextNonce&address=%s", info.IndexerURL, addr)
 
@@ -95,6 +100,12 @@ func GetNonce(info NonceInfo) ([]uint64, error) {
 
 	for _, req := range info.NonceReqs {
 
+		// default for gov addr -- nonce ignored in processing
+		if strings.HasPrefix(string(req.WalletAddress), "gov_") {
+			nonceRet = append(nonceRet, 0)
+			continue
+		}
+
 		// Validator mode
 		if info.ValidatorAddr == "" {
 			return []uint64{}, fmt.Errorf("validatorAddr are required when useIndexer is false")
@@ -130,6 +141,11 @@ func GetNonce(info NonceInfo) ([]uint64, error) {
 }
 
 func MakeNonceRequest(address string) (*pb.NonceRequest, error) {
+
+	if strings.HasPrefix(address, "gov_") {
+		return &pb.NonceRequest{WalletAddress: []byte(address)}, nil
+	}
+
 	decodedAddr, err := transcode.Base58Decode(address)
 
 	if err != nil {
