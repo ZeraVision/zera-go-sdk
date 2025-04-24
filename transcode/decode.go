@@ -77,6 +77,10 @@ func HashToHexByte(stringHash string) ([]byte, error) {
 
 // * Note this only works for single keys
 func Base58DecodePublicKey(publicKey string) (prefix []byte, public []byte, combined []byte, err error) {
+	if strings.HasPrefix(publicKey, "gov_") {
+		return []byte("gov_"), []byte(publicKey), []byte(publicKey), nil
+	}
+
 	// Find the last occurrence of '_'
 	lastUnderscoreIndex := strings.LastIndex(publicKey, "_")
 

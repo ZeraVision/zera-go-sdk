@@ -57,13 +57,19 @@ func CreateMintTxn(nonceInfo nonce.NonceInfo, symbol string, amount string, reci
 
 	// Step 3: Create BaseTXN
 	base := &pb.BaseTXN{
-		PublicKey: &pb.PublicKey{
-			Single: pubKeyBytes,
-		},
+		PublicKey: &pb.PublicKey{},
 		FeeId:     feeID,
 		FeeAmount: feeAmountParts,
 		Timestamp: timestamppb.New(time.Now().UTC()),
 		Nonce:     nonce[0],
+	}
+
+	if strings.HasPrefix(publicKeyBase58, "gov_") {
+		base.PublicKey.GovernanceAuth = pubKeyBytes
+	} else if strings.HasPrefix(publicKeyBase58, "sc_") {
+		base.PublicKey.SmartContractAuth = pubKeyBytes
+	} else {
+		base.PublicKey.Single = pubKeyBytes
 	}
 
 	// Step 4: Construct MintTXN
@@ -82,15 +88,17 @@ func CreateMintTxn(nonceInfo nonce.NonceInfo, symbol string, amount string, reci
 
 	// Step 6: Verify and determine key
 	// Check to ensure its a restricted key
-	if !strings.HasPrefix(publicKeyBase58, "r_") {
-		return nil, fmt.Errorf("public key is not a restricted key (r_): %s", publicKeyBase58)
+	if !strings.HasPrefix(publicKeyBase58, "r_") && !strings.HasPrefix(publicKeyBase58, "gov_") && !strings.HasPrefix(publicKeyBase58, "sc_") {
+		return nil, fmt.Errorf("not possible to do restricted logic (requires r_, gov_, or sc_ key): %s", publicKeyBase58)
 	}
 
 	// Find the substring between "r_" and the next "_"
-	pubBeyParts := strings.SplitN(publicKeyBase58, "_", 3) // Split into at most 3 parts
+	pubKeyParts := strings.SplitN(publicKeyBase58, "_", 3) // Split into at most 3 parts
 	var keyLetter string
-	if len(pubBeyParts) > 2 {
-		keyLetter = pubBeyParts[1]
+	if len(pubKeyParts) > 2 {
+		keyLetter = pubKeyParts[1]
+	} else if strings.HasPrefix(publicKeyBase58, "gov_") || strings.HasPrefix(publicKeyBase58, "sc_") {
+		keyLetter = "special"
 	} else {
 		return nil, fmt.Errorf("invalid public key format: %s", publicKeyBase58)
 	}
@@ -101,6 +109,8 @@ func CreateMintTxn(nonceInfo nonce.NonceInfo, symbol string, amount string, reci
 		keyType = helper.ED25519
 	} else if keyLetter == "B" {
 		keyType = helper.ED448
+	} else if keyLetter == "special" {
+		keyType = helper.SPECIAL
 	} else {
 		return nil, fmt.Errorf("unknown key type for public key: %s", publicKeyBase58)
 	}

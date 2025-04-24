@@ -17,8 +17,26 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// CreateVoteTxn creates a governance vote transaction by decoding the proposal ID and public key,
+// retrieving the nonce, constructing the base transaction, and signing and hashing the transaction.
+// It returns the constructed GovernanceVote protobuf object or an error if any step fails.
+//
+// Parameters:
+// - nonceInfo: Information required to retrieve the nonce.
+// - symbol: The contract symbol for the governance vote.
+// - proposalID: The proposal ID in hexadecimal format.
+// - publicKeyBase58: The voter's public key in Base58 format.
+// - privateKeyBase58: The voter's private key in Base58 format.
+// - feeID: The fee ID for the transaction.
+// - feeAmountParts: The fee amount in parts.
+// - support: A pointer to a boolean indicating whether the vote supports the proposal.
+// - voteOption: A pointer to a uint32 specifying the vote option.
+//
+// Returns:
+// - *pb.GovernanceVote: The constructed governance vote transaction.
+// - error: An error if any step in the process fails.
 func CreateVoteTxn(nonceInfo nonce.NonceInfo, symbol string, proposalID string, publicKeyBase58 string, privateKeyBase58 string, feeID string, feeAmountParts string, support *bool, voteOption *uint32) (*pb.GovernanceVote, error) {
-	// Step 1: Decode recipient address
+	// Step 1: proposalID (from hex)
 	proposalBytes, err := transcode.HexDecode(proposalID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode proposalID: %v", err)
@@ -63,7 +81,7 @@ func CreateVoteTxn(nonceInfo nonce.NonceInfo, symbol string, proposalID string, 
 	// Step 5: Serialize transaction before signing
 	byteDataNoSig, err := proto.Marshal(voteTxn)
 	if err != nil {
-		return nil, fmt.Errorf("failed to serialize mint transaction: %v", err)
+		return nil, fmt.Errorf("failed to serialize vote transaction: %v", err)
 	}
 
 	keyType, err := helper.DetermineKeyType(publicKeyBase58)

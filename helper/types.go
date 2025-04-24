@@ -3,6 +3,7 @@ package helper
 type KeyType int16
 
 const (
+	SPECIAL KeyType = 0 // special key -- ie gov, sc, no sig
 	ED25519 KeyType = 1
 	ED448   KeyType = 2
 )
