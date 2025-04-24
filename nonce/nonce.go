@@ -121,7 +121,7 @@ func GetNonce(info NonceInfo) ([]uint64, error) {
 		}
 		defer conn.Close()
 
-		client := helper.NewValidatorNetworkClient(conn)
+		client := helper.NewValidatorNetworkApiClient(conn)
 
 		response, err := client.Nonce(context.Background(), req)
 		if err != nil {
