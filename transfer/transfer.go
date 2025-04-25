@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
-	"sync"
-	"time"
 
 	pb "github.com/ZeraVision/go-zera-network/grpc/protobuf"
 	"github.com/ZeraVision/zera-go-sdk/helper"
@@ -111,77 +109,51 @@ func processInputs(nonceInfo nonce.NonceInfo, inputs []Inputs, parts *big.Int, m
 		keys           = map[string]keyTracking{}
 		totalInput     = big.NewFloat(0)
 		index          uint64
-		mu             sync.Mutex
-		wg             sync.WaitGroup
-		errChan        = make(chan error, len(inputs)) // Channel to capture errors
 	)
 
 	for i, input := range inputs {
-		wg.Add(1)
-		if i > 0 {
-			time.Sleep(time.Second / (time.Duration(maxRps) - 1)) // small delay to avoid overwhelming the system
-		}
-		go func(i int, input Inputs) {
-			defer wg.Done()
 
-			// Decode public key
-			_, _, pubKeyByte, err := transcode.Base58DecodePublicKey(input.PublicKey)
-			if err != nil {
-				errChan <- fmt.Errorf("could not decode public key: %v", err)
-				return
-			}
-
-			// Calculate amount in parts
-			amountPartsBigF := new(big.Float).Mul(input.Amount, big.NewFloat(float64(parts.Int64())))
-
-			// Get nonce
-			nonce, err := nonce.GetNonce(nonceInfo)
-			if err != nil {
-				errChan <- fmt.Errorf("could not get nonce: %v", err)
-				return
-			}
-
-			// Lock shared resources for thread-safe updates
-			mu.Lock()
-			defer mu.Unlock()
-
-			// Append to inputTransfers
-			inputTransfers = append(inputTransfers, &pb.InputTransfers{
-				Index:      index,
-				Amount:     amountPartsBigF.String(),
-				FeePercent: uint32(input.FeePercent * 1_000_000),
-			})
-
-			// Append to auth
-			auth = append(auth, authTracking{
-				PublicKeyBytes: pubKeyByte,
-				Signature:      nil,
-				Nonce:          nonce[i],
-			})
-
-			// Add to keys map
-			keys[transcode.Base58Encode(pubKeyByte)] = keyTracking{
-				KeyType:    input.KeyType,
-				PrivateKey: input.PrivateKey,
-			}
-
-			// Update totalInput
-			totalInput.Add(totalInput, amountPartsBigF)
-
-			// Increment index
-			index++
-		}(i, input)
-	}
-
-	// Wait for all goroutines to finish
-	wg.Wait()
-	close(errChan)
-
-	// Check for errors
-	for err := range errChan {
+		// Decode public key
+		_, _, pubKeyByte, err := transcode.Base58DecodePublicKey(input.PublicKey)
 		if err != nil {
-			return nil, nil, nil, nil, err
+			return nil, nil, nil, nil, fmt.Errorf("could not decode public key: %v", err)
 		}
+
+		// Calculate amount in parts
+		amountPartsBigF := new(big.Float).Mul(input.Amount, big.NewFloat(float64(parts.Int64())))
+
+		// Get nonce
+		nonce, err := nonce.GetNonce(nonceInfo, maxRps)
+		if err != nil {
+			return nil, nil, nil, nil, fmt.Errorf("could not get nonce: %v", err)
+		}
+
+		// Append to inputTransfers
+		inputTransfers = append(inputTransfers, &pb.InputTransfers{
+			Index:      index,
+			Amount:     amountPartsBigF.String(),
+			FeePercent: uint32(input.FeePercent * 1_000_000),
+		})
+
+		// Append to auth
+		auth = append(auth, authTracking{
+			PublicKeyBytes: pubKeyByte,
+			Signature:      nil,
+			Nonce:          nonce[i],
+		})
+
+		// Add to keys map
+		keys[transcode.Base58Encode(pubKeyByte)] = keyTracking{
+			KeyType:    input.KeyType,
+			PrivateKey: input.PrivateKey,
+		}
+
+		// Update totalInput
+		totalInput.Add(totalInput, amountPartsBigF)
+
+		// Increment index
+		index++
+
 	}
 
 	return inputTransfers, auth, keys, totalInput, nil

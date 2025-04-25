@@ -2,12 +2,13 @@ package nonce
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	pb "github.com/ZeraVision/go-zera-network/grpc/protobuf"
 	"github.com/ZeraVision/zera-go-sdk/helper"
@@ -27,40 +28,50 @@ type NonceInfo struct {
 }
 
 // GetNonce retrieves the nonce either from the Indexer HTTP API or the Validator gRPC service.
-// If useIndexer is true, indexerURL and apiKey must be provided. Uses ZV indexer (higher reliability, multiple geo locations (for lower global latency))
-// If useIndexer is false, nonceReq and validatorAddr must be provided. Uses direct validator gRPC (lower reliability)
-func GetNonce(info NonceInfo) ([]uint64, error) {
+func GetNonce(info NonceInfo, maxRps int) ([]uint64, error) {
 	if len(info.Override) > 0 {
 		return info.Override, nil
 	}
 
-	var nonceRet []uint64
+	// Ensure maxRps is valid
+	if maxRps <= 1 {
+		return []uint64{}, fmt.Errorf("maxRps must be greater than 1")
+	}
 
-	if info.UseIndexer {
-		if info.IndexerURL == "" || info.Authorization == "" || len(info.Addresses) < 1 {
-			return []uint64{}, fmt.Errorf("indexerURL, authorization, and address are required when useIndexer is true")
-		}
+	// Calculate delay between requests
+	delay := time.Second / time.Duration(maxRps-1)
 
-		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		}
-		client := &http.Client{Transport: tr}
+	var (
+		nonceRet []uint64
+		mu       sync.Mutex
+		errChan  = make(chan error, len(info.Addresses)+len(info.NonceReqs)) // Channel to capture errors
+	)
 
-		for _, addr := range info.Addresses {
+	// Create a worker pool channel to limit concurrency
+	workerPool := make(chan struct{}, maxRps)
 
-			// default for gov addr -- nonce ignored in processing
+	// Function to process a single address or request
+	processNonce := func(addr string, req *pb.NonceRequest, useIndexer bool) {
+		defer func() { <-workerPool }() // Release the worker slot when done
+
+		// Wait for rate limiter
+		time.Sleep(delay)
+
+		if useIndexer {
+			// Indexer mode
 			if strings.HasPrefix(addr, "gov_") {
+				mu.Lock()
 				nonceRet = append(nonceRet, 0)
-				continue
+				mu.Unlock()
+				return
 			}
 
 			url := fmt.Sprintf("%s/store?requestType=getNextNonce&address=%s", info.IndexerURL, addr)
 
 			req, err := http.NewRequest("POST", url, nil)
 			if err != nil {
-				return []uint64{}, fmt.Errorf("failed to create request: %w", err)
+				errChan <- fmt.Errorf("failed to create request: %w", err)
+				return
 			}
 
 			req.Header.Add("Target", "indexer")
@@ -72,72 +83,105 @@ func GetNonce(info NonceInfo) ([]uint64, error) {
 				req.Header.Add("Authorization", "Api-Key "+info.Authorization)
 			}
 
+			client := &http.Client{}
 			resp, err := client.Do(req)
 			if err != nil {
-				return []uint64{}, fmt.Errorf("failed to perform request: %w", err)
+				errChan <- fmt.Errorf("failed to perform request: %w", err)
+				return
 			}
 			defer resp.Body.Close()
 
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
-				return []uint64{}, fmt.Errorf("failed to read response: %w", err)
+				errChan <- fmt.Errorf("failed to read response: %w", err)
+				return
 			}
 
 			nonce, err := strconv.ParseUint(strings.TrimSpace(string(body)), 10, 64)
 			if err != nil {
-				return []uint64{}, fmt.Errorf("failed to parse nonce: %w", err)
+				errChan <- fmt.Errorf("failed to parse nonce: %w", err)
+				return
 			}
 
+			mu.Lock()
 			nonceRet = append(nonceRet, nonce)
-		}
-
-		if len(nonceRet) < 1 || len(nonceRet) != len(info.Addresses) {
-			return []uint64{}, fmt.Errorf("unexpected result in nonce lookup")
-		}
-
-		return nonceRet, nil
-	}
-
-	for _, req := range info.NonceReqs {
-
-		// default for gov addr -- nonce ignored in processing
-		if strings.HasPrefix(string(req.WalletAddress), "gov_") {
-			nonceRet = append(nonceRet, 0)
-			continue
-		}
-
-		// Validator mode
-		if info.ValidatorAddr == "" {
-			return []uint64{}, fmt.Errorf("validatorAddr are required when useIndexer is false")
-		}
-
-		if !strings.Contains(info.ValidatorAddr, ":") {
-			info.ValidatorAddr += ":50053"
-		}
-
-		conn, err := grpc.NewClient(info.ValidatorAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			return []uint64{}, fmt.Errorf("failed to connect to validator: %w", err)
-		}
-		defer conn.Close()
-
-		client := helper.NewValidatorNetworkApiClient(conn)
-
-		response, err := client.Nonce(context.Background(), req)
-		if err != nil {
-			// If first time
-			if strings.Contains(err.Error(), "does not exist") {
-				response = &pb.NonceResponse{Nonce: 0}
-			} else {
-				return []uint64{}, fmt.Errorf("nonce request failed: %w", err)
+			mu.Unlock()
+		} else {
+			// Validator mode
+			if strings.HasPrefix(string(req.WalletAddress), "gov_") {
+				mu.Lock()
+				nonceRet = append(nonceRet, 0)
+				mu.Unlock()
+				return
 			}
+
+			if info.ValidatorAddr == "" {
+				errChan <- fmt.Errorf("validatorAddr is required when useIndexer is false")
+				return
+			}
+
+			if !strings.Contains(info.ValidatorAddr, ":") {
+				info.ValidatorAddr += ":50053"
+			}
+
+			conn, err := grpc.Dial(info.ValidatorAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				errChan <- fmt.Errorf("failed to connect to validator: %w", err)
+				return
+			}
+			defer conn.Close()
+
+			client := helper.NewValidatorNetworkApiClient(conn)
+
+			response, err := client.Nonce(context.Background(), req)
+			if err != nil {
+				// If first time
+				if strings.Contains(err.Error(), "does not exist") {
+					response = &pb.NonceResponse{Nonce: 0}
+				} else {
+					errChan <- fmt.Errorf("nonce request failed: %w", err)
+					return
+				}
+			}
+
+			mu.Lock()
+			nonceRet = append(nonceRet, response.GetNonce()+1)
+			mu.Unlock()
 		}
-
-		nonceRet = append(nonceRet, response.GetNonce()+1)
-
 	}
 
-	return nonceRet, nil // add one from validator to return the nonce the user should currently use
+	// Process Indexer mode
+	if info.UseIndexer {
+		if info.IndexerURL == "" || info.Authorization == "" || len(info.Addresses) < 1 {
+			return []uint64{}, fmt.Errorf("indexerURL, authorization, and address are required when useIndexer is true")
+		}
+
+		for _, addr := range info.Addresses {
+			workerPool <- struct{}{} // Acquire a worker slot
+			go processNonce(addr, nil, true)
+		}
+	}
+
+	// Process Validator mode
+	for _, req := range info.NonceReqs {
+		workerPool <- struct{}{} // Acquire a worker slot
+		go processNonce("", req, false)
+	}
+
+	// Wait for all workers to finish
+	for i := 0; i < cap(workerPool); i++ {
+		workerPool <- struct{}{}
+	}
+	close(errChan)
+
+	// Check for errors
+	for err := range errChan {
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return nonceRet, nil
 }
 
 func MakeNonceRequest(address string) (*pb.NonceRequest, error) {

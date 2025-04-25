@@ -45,7 +45,7 @@ func CreateMintTxn(nonceInfo nonce.NonceInfo, symbol string, amount string, reci
 		return nil, fmt.Errorf("failed to decode public key: %v", err)
 	}
 
-	nonce, err := nonce.GetNonce(nonceInfo)
+	nonce, err := nonce.GetNonce(nonceInfo, 5)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get nonce: %v", err)

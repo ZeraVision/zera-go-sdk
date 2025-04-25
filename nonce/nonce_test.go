@@ -24,7 +24,7 @@ func TestGetNonce_UseIndexer(t *testing.T) {
 		Authorization: os.Getenv("INDEXER_API_KEY"),
 	}
 
-	nonceValue, err := nonce.GetNonce(nonceInfo)
+	nonceValue, err := nonce.GetNonce(nonceInfo, 5)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -51,7 +51,7 @@ func TestGetNonce_ValidatorMode(t *testing.T) {
 		ValidatorAddr: testvars.TEST_GRPC_ADDRESS,
 	}
 
-	nonceValue, err := nonce.GetNonce(nonceInfo)
+	nonceValue, err := nonce.GetNonce(nonceInfo, 5)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
