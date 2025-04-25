@@ -111,8 +111,13 @@ func processInputs(nonceInfo nonce.NonceInfo, inputs []Inputs, parts *big.Int, m
 		index          uint64
 	)
 
-	for i, input := range inputs {
+	// Get nonce
+	nonce, err := nonce.GetNonce(nonceInfo, maxRps)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("could not get nonce: %v", err)
+	}
 
+	for i, input := range inputs {
 		// Decode public key
 		_, _, pubKeyByte, err := transcode.Base58DecodePublicKey(input.PublicKey)
 		if err != nil {
@@ -121,12 +126,6 @@ func processInputs(nonceInfo nonce.NonceInfo, inputs []Inputs, parts *big.Int, m
 
 		// Calculate amount in parts
 		amountPartsBigF := new(big.Float).Mul(input.Amount, big.NewFloat(float64(parts.Int64())))
-
-		// Get nonce
-		nonce, err := nonce.GetNonce(nonceInfo, maxRps)
-		if err != nil {
-			return nil, nil, nil, nil, fmt.Errorf("could not get nonce: %v", err)
-		}
 
 		// Append to inputTransfers
 		inputTransfers = append(inputTransfers, &pb.InputTransfers{
