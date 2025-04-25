@@ -112,7 +112,7 @@ func GetNonce(info NonceInfo) ([]uint64, error) {
 		}
 
 		if !strings.Contains(info.ValidatorAddr, ":") {
-			info.ValidatorAddr += ":50051"
+			info.ValidatorAddr += ":50053"
 		}
 
 		conn, err := grpc.NewClient(info.ValidatorAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -152,5 +152,5 @@ func MakeNonceRequest(address string) (*pb.NonceRequest, error) {
 		return nil, fmt.Errorf("failed to decode address: %w", err)
 	}
 
-	return &pb.NonceRequest{WalletAddress: decodedAddr}, nil
+	return &pb.NonceRequest{WalletAddress: decodedAddr, Encoded: false}, nil
 }
