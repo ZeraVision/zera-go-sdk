@@ -54,7 +54,7 @@ func testSignature(t *testing.T, address, testPublic, testPrivate string, keyTyp
 	}
 
 	// via indexer
-	txn, err := transfer.CreateCoinTxn(nonceInfo, partsInfo, inputs, outputs, baseFeeID, baseFeeAmountParts, nil, nil)
+	txn, err := transfer.CreateCoinTxn(nonceInfo, partsInfo, inputs, outputs, baseFeeID, baseFeeAmountParts, nil, nil, 5)
 	// via validator
 	//txn, err := transfer.CreateCoinTxn(false, inputs, outputs, testvars.TEST_GRPC_ADDR, "", symbol, baseFeeID, baseFeeAmountParts, nil, nil)
 

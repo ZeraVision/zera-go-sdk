@@ -248,7 +248,7 @@ func testCoin(t *testing.T, nonceInfo nonce.NonceInfo, inputs []transfer.Inputs,
 	}
 
 	// Indexer
-	txn, err := transfer.CreateCoinTxn(nonceInfo, partsInfo, inputs, outputs, baseFeeID, baseFeeAmountParts, nil, nil)
+	txn, err := transfer.CreateCoinTxn(nonceInfo, partsInfo, inputs, outputs, baseFeeID, baseFeeAmountParts, nil, nil, 5)
 
 	// Validator
 

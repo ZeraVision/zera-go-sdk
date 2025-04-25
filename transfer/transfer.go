@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"sync"
+	"time"
 
 	pb "github.com/ZeraVision/go-zera-network/grpc/protobuf"
 	"github.com/ZeraVision/zera-go-sdk/helper"
@@ -28,7 +30,7 @@ type Inputs struct {
 	ContractFeePercent *float32   // 0-100 max 6 digits of precision
 }
 
-func CreateCoinTxn(nonceInfo nonce.NonceInfo, partsInfo parts.PartsInfo, inputs []Inputs, outputs map[string]*big.Float, baseFeeID, baseFeeAmountParts string, contractFeeID, contractFeeAmountParts *string) (*pb.CoinTXN, error) {
+func CreateCoinTxn(nonceInfo nonce.NonceInfo, partsInfo parts.PartsInfo, inputs []Inputs, outputs map[string]*big.Float, baseFeeID, baseFeeAmountParts string, contractFeeID, contractFeeAmountParts *string, maxRps int) (*pb.CoinTXN, error) {
 
 	parts, err := parts.GetParts(partsInfo)
 
@@ -37,7 +39,7 @@ func CreateCoinTxn(nonceInfo nonce.NonceInfo, partsInfo parts.PartsInfo, inputs 
 	}
 
 	// Step 1: Process Inputs
-	inputTransfers, auth, keys, totalInput, err := processInputs(nonceInfo, inputs, parts)
+	inputTransfers, auth, keys, totalInput, err := processInputs(nonceInfo, inputs, parts, maxRps)
 	if err != nil {
 		return nil, err
 	}
@@ -102,49 +104,84 @@ type authTracking struct {
 	Nonce          uint64
 }
 
-// Helper Function: Process Inputs
-// useIndexer - true if using indexer, false if using validator
-// nonceEndpoint - url / addr of indexer or validator
-func processInputs(nonceInfo nonce.NonceInfo, inputs []Inputs, parts *big.Int) ([]*pb.InputTransfers, []authTracking, map[string]keyTracking, *big.Float, error) {
-	var inputTransfers []*pb.InputTransfers
-	var auth []authTracking
-	keys := map[string]keyTracking{}
-	totalInput := big.NewFloat(0)
-	index := uint64(0)
+func processInputs(nonceInfo nonce.NonceInfo, inputs []Inputs, parts *big.Int, maxRps int) ([]*pb.InputTransfers, []authTracking, map[string]keyTracking, *big.Float, error) {
+	var (
+		inputTransfers []*pb.InputTransfers
+		auth           []authTracking
+		keys           = map[string]keyTracking{}
+		totalInput     = big.NewFloat(0)
+		index          uint64
+		mu             sync.Mutex
+		wg             sync.WaitGroup
+		errChan        = make(chan error, len(inputs)) // Channel to capture errors
+	)
 
 	for i, input := range inputs {
-		_, _, pubKeyByte, err := transcode.Base58DecodePublicKey(input.PublicKey)
+		wg.Add(1)
+		if i > 0 {
+			time.Sleep(time.Second / (time.Duration(maxRps) - 1)) // small delay to avoid overwhelming the system
+		}
+		go func(i int, input Inputs) {
+			defer wg.Done()
+
+			// Decode public key
+			_, _, pubKeyByte, err := transcode.Base58DecodePublicKey(input.PublicKey)
+			if err != nil {
+				errChan <- fmt.Errorf("could not decode public key: %v", err)
+				return
+			}
+
+			// Calculate amount in parts
+			amountPartsBigF := new(big.Float).Mul(input.Amount, big.NewFloat(float64(parts.Int64())))
+
+			// Get nonce
+			nonce, err := nonce.GetNonce(nonceInfo)
+			if err != nil {
+				errChan <- fmt.Errorf("could not get nonce: %v", err)
+				return
+			}
+
+			// Lock shared resources for thread-safe updates
+			mu.Lock()
+			defer mu.Unlock()
+
+			// Append to inputTransfers
+			inputTransfers = append(inputTransfers, &pb.InputTransfers{
+				Index:      index,
+				Amount:     amountPartsBigF.String(),
+				FeePercent: uint32(input.FeePercent * 1_000_000),
+			})
+
+			// Append to auth
+			auth = append(auth, authTracking{
+				PublicKeyBytes: pubKeyByte,
+				Signature:      nil,
+				Nonce:          nonce[i],
+			})
+
+			// Add to keys map
+			keys[transcode.Base58Encode(pubKeyByte)] = keyTracking{
+				KeyType:    input.KeyType,
+				PrivateKey: input.PrivateKey,
+			}
+
+			// Update totalInput
+			totalInput.Add(totalInput, amountPartsBigF)
+
+			// Increment index
+			index++
+		}(i, input)
+	}
+
+	// Wait for all goroutines to finish
+	wg.Wait()
+	close(errChan)
+
+	// Check for errors
+	for err := range errChan {
 		if err != nil {
-			return nil, nil, nil, nil, fmt.Errorf("could not decode public key: %v", err)
+			return nil, nil, nil, nil, err
 		}
-
-		amountPartsBigF := new(big.Float).Mul(input.Amount, big.NewFloat(float64(parts.Int64())))
-
-		inputTransfers = append(inputTransfers, &pb.InputTransfers{
-			Index:      index,
-			Amount:     amountPartsBigF.String(),
-			FeePercent: uint32(input.FeePercent * 1_000_000),
-		})
-
-		nonce, err := nonce.GetNonce(nonceInfo)
-
-		if err != nil {
-			return nil, nil, nil, nil, fmt.Errorf("could not get nonce: %v", err)
-		}
-
-		auth = append(auth, authTracking{
-			PublicKeyBytes: pubKeyByte,
-			Signature:      nil,
-			Nonce:          nonce[i],
-		})
-
-		keys[transcode.Base58Encode(pubKeyByte)] = keyTracking{
-			KeyType:    input.KeyType,
-			PrivateKey: input.PrivateKey,
-		}
-
-		totalInput.Add(totalInput, amountPartsBigF)
-		index++
 	}
 
 	return inputTransfers, auth, keys, totalInput, nil
