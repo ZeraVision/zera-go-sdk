@@ -102,12 +102,12 @@ type authTracking struct {
 	Nonce          uint64
 }
 
-func processInputs(nonceInfo nonce.NonceInfo, inputs []Inputs, parts *big.Int, maxRps int) ([]*pb.InputTransfers, []authTracking, map[string]keyTracking, *big.Float, error) {
+func processInputs(nonceInfo nonce.NonceInfo, inputs []Inputs, parts *big.Int, maxRps int) ([]*pb.InputTransfers, []authTracking, map[string]keyTracking, *big.Int, error) {
 	var (
 		inputTransfers []*pb.InputTransfers
 		auth           []authTracking
 		keys           = map[string]keyTracking{}
-		totalInput     = big.NewFloat(0)
+		totalInput     = big.NewInt(0)
 		index          uint64
 	)
 
@@ -130,13 +130,10 @@ func processInputs(nonceInfo nonce.NonceInfo, inputs []Inputs, parts *big.Int, m
 			return nil, nil, nil, nil, fmt.Errorf("could not parse amount %q: %v", input.Amount, err)
 		}
 
-		// Convert amountParts to big.Float for inputTransfers and totalInput
-		amountPartsBigF := new(big.Float).SetInt(amountParts)
-
 		// Append to inputTransfers
 		inputTransfers = append(inputTransfers, &pb.InputTransfers{
 			Index:      index,
-			Amount:     amountPartsBigF.String(), // Store as string representation
+			Amount:     amountParts.String(), // Store as string representation
 			FeePercent: uint32(input.FeePercent * 1_000_000),
 		})
 
@@ -154,7 +151,7 @@ func processInputs(nonceInfo nonce.NonceInfo, inputs []Inputs, parts *big.Int, m
 		}
 
 		// Update totalInput
-		totalInput.Add(totalInput, amountPartsBigF)
+		totalInput.Add(totalInput, amountParts)
 
 		// Increment index
 		index++
@@ -164,9 +161,9 @@ func processInputs(nonceInfo nonce.NonceInfo, inputs []Inputs, parts *big.Int, m
 }
 
 // processOutputs processes output amounts and converts them to parts.
-func processOutputs(outputs map[string]string, parts *big.Int) ([]*pb.OutputTransfers, *big.Float, error) {
+func processOutputs(outputs map[string]string, parts *big.Int) ([]*pb.OutputTransfers, *big.Int, error) {
 	var outputsTransfers []*pb.OutputTransfers
-	totalOutput := big.NewFloat(0)
+	totalOutput := big.NewInt(0)
 
 	for address, amount := range outputs {
 		// Decode address
@@ -181,17 +178,14 @@ func processOutputs(outputs map[string]string, parts *big.Int) ([]*pb.OutputTran
 			return nil, nil, fmt.Errorf("could not parse amount %q for address %q: %v", amount, address, err)
 		}
 
-		// Convert amountParts to big.Float for outputsTransfers and totalOutput
-		bigFParts := new(big.Float).SetInt(amountParts)
-
 		// Append to outputsTransfers
 		outputsTransfers = append(outputsTransfers, &pb.OutputTransfers{
 			WalletAddress: decodedAddr,
-			Amount:        bigFParts.String(),
+			Amount:        amountParts.String(),
 		})
 
 		// Update totalOutput
-		totalOutput.Add(totalOutput, bigFParts)
+		totalOutput.Add(totalOutput, amountParts)
 	}
 
 	return outputsTransfers, totalOutput, nil
