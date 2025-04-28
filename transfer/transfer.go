@@ -21,14 +21,14 @@ import (
 type Inputs struct {
 	B58Address         string
 	KeyType            helper.KeyType
-	PublicKey          string     // Base 58 encoded
-	PrivateKey         string     // Base 58 encoded
-	Amount             *big.Float // full coins (not parts)
-	FeePercent         float32    // 0-100 max 6 digits of precision
-	ContractFeePercent *float32   // 0-100 max 6 digits of precision
+	PublicKey          string   // Base 58 encoded
+	PrivateKey         string   // Base 58 encoded
+	Amount             string   // full coins (not parts)
+	FeePercent         float32  // 0-100 max 6 digits of precision
+	ContractFeePercent *float32 // 0-100 max 6 digits of precision
 }
 
-func CreateCoinTxn(nonceInfo nonce.NonceInfo, partsInfo parts.PartsInfo, inputs []Inputs, outputs map[string]*big.Float, baseFeeID, baseFeeAmountParts string, contractFeeID, contractFeeAmountParts *string, maxRps int) (*pb.CoinTXN, error) {
+func CreateCoinTxn(nonceInfo nonce.NonceInfo, partsInfo parts.PartsInfo, inputs []Inputs, outputs map[string]string, baseFeeID, baseFeeAmountParts string, contractFeeID, contractFeeAmountParts *string, maxRps int) (*pb.CoinTXN, error) {
 
 	parts, err := parts.GetParts(partsInfo)
 
@@ -124,13 +124,19 @@ func processInputs(nonceInfo nonce.NonceInfo, inputs []Inputs, parts *big.Int, m
 			return nil, nil, nil, nil, fmt.Errorf("could not decode public key: %v", err)
 		}
 
-		// Calculate amount in parts
-		amountPartsBigF := new(big.Float).Mul(input.Amount, big.NewFloat(float64(parts.Int64())))
+		// Parse amount string (e.g., "1.23")
+		amountParts, err := parseAmountToParts(input.Amount, parts)
+		if err != nil {
+			return nil, nil, nil, nil, fmt.Errorf("could not parse amount %q: %v", input.Amount, err)
+		}
+
+		// Convert amountParts to big.Float for inputTransfers and totalInput
+		amountPartsBigF := new(big.Float).SetInt(amountParts)
 
 		// Append to inputTransfers
 		inputTransfers = append(inputTransfers, &pb.InputTransfers{
 			Index:      index,
-			Amount:     amountPartsBigF.String(),
+			Amount:     amountPartsBigF.String(), // Store as string representation
 			FeePercent: uint32(input.FeePercent * 1_000_000),
 		})
 
@@ -152,34 +158,91 @@ func processInputs(nonceInfo nonce.NonceInfo, inputs []Inputs, parts *big.Int, m
 
 		// Increment index
 		index++
-
 	}
 
 	return inputTransfers, auth, keys, totalInput, nil
 }
 
-// Helper Function: Process Outputs
-func processOutputs(outputs map[string]*big.Float, parts *big.Int) ([]*pb.OutputTransfers, *big.Float, error) {
+// processOutputs processes output amounts and converts them to parts.
+func processOutputs(outputs map[string]string, parts *big.Int) ([]*pb.OutputTransfers, *big.Float, error) {
 	var outputsTransfers []*pb.OutputTransfers
 	totalOutput := big.NewFloat(0)
 
 	for address, amount := range outputs {
+		// Decode address
 		decodedAddr, err := transcode.Base58Decode(address)
 		if err != nil {
 			return nil, nil, fmt.Errorf("could not decode address: %v", err)
 		}
 
-		bigFParts := new(big.Float).Mul(amount, new(big.Float).SetInt(parts))
+		// Parse amount string (e.g., "1.23")
+		amountParts, err := parseAmountToParts(amount, parts)
+		if err != nil {
+			return nil, nil, fmt.Errorf("could not parse amount %q for address %q: %v", amount, address, err)
+		}
 
+		// Convert amountParts to big.Float for outputsTransfers and totalOutput
+		bigFParts := new(big.Float).SetInt(amountParts)
+
+		// Append to outputsTransfers
 		outputsTransfers = append(outputsTransfers, &pb.OutputTransfers{
 			WalletAddress: decodedAddr,
 			Amount:        bigFParts.String(),
 		})
 
+		// Update totalOutput
 		totalOutput.Add(totalOutput, bigFParts)
 	}
 
 	return outputsTransfers, totalOutput, nil
+}
+
+// parseAmountToParts converts a decimal string (e.g., "1.23") to parts (e.g., 1230 for 1000 parts per coin).
+func parseAmountToParts(amountStr string, partsPerCoin *big.Int) (*big.Int, error) {
+	// Validate input
+	if amountStr == "" || strings.Count(amountStr, ".") > 1 {
+		return nil, fmt.Errorf("invalid amount format")
+	}
+
+	// Split into whole and fractional parts
+	parts := strings.Split(amountStr, ".")
+	wholeStr := parts[0]
+	var fractionalStr string
+	if len(parts) > 1 {
+		fractionalStr = parts[1]
+	} else {
+		fractionalStr = "0"
+	}
+
+	// Convert whole part to big.Int
+	whole, ok := new(big.Int).SetString(wholeStr, 10)
+	if !ok {
+		return nil, fmt.Errorf("invalid whole number %q", wholeStr)
+	}
+
+	// Convert fractional part to big.Int, aligning with partsPerCoin
+	// Truncate or pad fractional part to match partsPerCoin precision
+	partsPerCoinStr := partsPerCoin.String()
+	precision := len(partsPerCoinStr) - 1                 // e.g., 1000 -> 3 digits
+	fractionalStr = strings.TrimRight(fractionalStr, "0") // Remove trailing zeros
+	if len(fractionalStr) > precision {
+		fractionalStr = fractionalStr[:precision] // Truncate to precision
+	}
+	fractionalStr = fmt.Sprintf("%0*s", precision, fractionalStr) // Pad with zeros
+	fractional, ok := new(big.Int).SetString(fractionalStr, 10)
+	if !ok {
+		return nil, fmt.Errorf("invalid fractional number %q", fractionalStr)
+	}
+
+	// Calculate total parts: (whole * partsPerCoin) + fractional
+	result := new(big.Int).Mul(whole, partsPerCoin)
+	result.Add(result, fractional)
+
+	if result.Sign() < 0 {
+		return nil, fmt.Errorf("negative amount not allowed")
+	}
+
+	return result, nil
 }
 
 // Helper Function: Build Transfer Authentication
