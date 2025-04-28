@@ -33,13 +33,13 @@ func testSignature(t *testing.T, address, testPublic, testPrivate string, keyTyp
 		KeyType:    keyType,
 		PublicKey:  testPublic,
 		PrivateKey: testPrivate,
-		Amount:     big.NewFloat(1.01),
+		Amount:     "1.01",
 		FeePercent: 100,
 	})
 
-	outputs := map[string]*big.Float{}
+	outputs := map[string]string{}
 
-	outputs["outputAddr1"] = big.NewFloat(1.01)
+	outputs["outputAddr1"] = "1.01"
 
 	baseFeeID := "$ZRA+0000"
 	baseFeeAmountParts := "1000000000" // 1 zra
