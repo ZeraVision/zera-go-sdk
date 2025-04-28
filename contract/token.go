@@ -23,6 +23,7 @@ type TokenData struct {
 	ContractId         string                 // Contract ID (ie $ZRA+0000 - must be unique to network)
 	Symbol             string                 // Symbol (ie ZRA) without any contractID identifier (ie $ZRA+0000)
 	Name               string                 // Name of the contract (ie ZERA)
+	Memo               string                 // Memo in base
 	Governance         *pb.Governance         // Governance configuration (ie staged, cycle, adaptive, staged, cycle, [empty])
 	RestrictedKeys     []*pb.RestrictedKey    // Restricted keys for the contract (ie empty (not suitable for most cases), other specicial permissions)
 	Denomination       *pb.CoinDenomination   // How many 'parts' per coin there are (ie ZERA has 1_000_000_000 parts per coin)
@@ -67,6 +68,10 @@ func CreateTokenTXN(nonceInfo nonce.NonceInfo, data *TokenData, publicKeyBase58 
 		FeeAmount: feeAmountParts,
 		Timestamp: timestamppb.New(time.Now().UTC()),
 		Nonce:     nonce[0],
+	}
+
+	if data.Memo != "" {
+		base.Memo = &data.Memo
 	}
 
 	var startCurequivStr *string
