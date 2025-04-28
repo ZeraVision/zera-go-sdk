@@ -112,9 +112,6 @@ func CreateGovernance(govType GovernanceTypeHelper, regularQuorum float64, fastQ
 	// Add staged parameters
 	if govType.Type == Staged {
 		for _, stage := range govType.Stages {
-			if stage.Length < 1 {
-				return nil, fmt.Errorf("stage length must be greater than 0")
-			}
 			if stage.MaxApproved < 1 {
 				return nil, fmt.Errorf("max approved must be greater than 0")
 			}
