@@ -81,6 +81,10 @@ func CreateGovernance(govType GovernanceTypeHelper, regularQuorum float64, fastQ
 		AllowMulti:                allowMultiChoice,
 	}
 
+	if govType.StartTimestamp != nil {
+		gov.StartTimestamp = govType.StartTimestamp
+	}
+
 	if govType.Type == Staged || govType.Type == Cycle || govType.Type == Staggared {
 		if govType.ProposalPeriod == nil {
 			return nil, fmt.Errorf("proposalPeriod is required for staged, cycle, and staggered governance types")
