@@ -93,10 +93,9 @@ func CreateGovernance(govType GovernanceTypeHelper, regularQuorum float64, fastQ
 		period := pb.PROPOSAL_PERIOD(govType.ProposalPeriod.PeriodType)
 		gov.ProposalPeriod = &period
 		gov.VotingPeriod = &govType.ProposalPeriod.VotingPeriod
-	} else {
-		if govType.ProposalPeriod != nil {
-			return nil, fmt.Errorf("proposalPeriod is not allowed for adaptive governance type -- have you made a mistake?")
-		}
+	} else if govType.ProposalPeriod != nil {
+		return nil, fmt.Errorf("proposalPeriod is not allowed for adaptive governance type -- have you made a mistake?")
+
 	}
 
 	if govType.Type == Staged || govType.Type == Cycle {
@@ -105,7 +104,7 @@ func CreateGovernance(govType GovernanceTypeHelper, regularQuorum float64, fastQ
 		}
 
 		gov.StartTimestamp = govType.StartTimestamp
-	} else {
+	} else if gov.StartTimestamp != nil {
 		fmt.Println("warning: startTimestamp is ignored for adaptive and staggered governance types")
 	}
 
