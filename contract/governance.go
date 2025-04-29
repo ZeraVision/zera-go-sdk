@@ -51,7 +51,7 @@ func CreateGovernance(govType GovernanceTypeHelper, regularQuorum float64, fastQ
 		return nil, fmt.Errorf("regularQuorum must be between 0 and 100")
 	}
 
-	regularQuorumScaled := uint32(regularQuorum * 100)
+	regularQuorumScaled := uint32(votingThreshold * 100)
 
 	// Convert fastQuorum to a whole number between 0-9999 (if provided)
 	var fastQuorumScaled *uint32
@@ -95,7 +95,6 @@ func CreateGovernance(govType GovernanceTypeHelper, regularQuorum float64, fastQ
 		gov.VotingPeriod = &govType.ProposalPeriod.VotingPeriod
 	} else if govType.ProposalPeriod != nil {
 		return nil, fmt.Errorf("proposalPeriod is not allowed for adaptive governance type -- have you made a mistake?")
-
 	}
 
 	if govType.Type == Staged || govType.Type == Cycle {
