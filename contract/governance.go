@@ -51,7 +51,7 @@ func CreateGovernance(govType GovernanceTypeHelper, regularQuorum float64, fastQ
 		return nil, fmt.Errorf("regularQuorum must be between 0 and 100")
 	}
 
-	regularQuorumScaled := uint32(votingThreshold * 100)
+	regularQuorumScaled := uint32(regularQuorum * 100)
 
 	// Convert fastQuorum to a whole number between 0-9999 (if provided)
 	var fastQuorumScaled *uint32
@@ -68,7 +68,7 @@ func CreateGovernance(govType GovernanceTypeHelper, regularQuorum float64, fastQ
 		return nil, fmt.Errorf("votingThreshold must be between 0 and 100")
 	}
 
-	votingThresholdScaled := uint32(regularQuorum * 10)
+	votingThresholdScaled := uint32(votingThreshold * 10)
 
 	gov := &pb.Governance{
 		Type:                      pb.GOVERNANCE_TYPE(govType.Type),
