@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	pb "github.com/ZeraVision/go-zera-network/grpc/protobuf"
@@ -27,7 +26,6 @@ type NonceInfo struct {
 	Override      []uint64           // optional, if set, this nonce will be used instead of the one from the indexer or validator
 }
 
-// GetNonce retrieves the nonce either from the Indexer HTTP API or the Validator gRPC service.
 func GetNonce(info NonceInfo, maxRps int) ([]uint64, error) {
 	if len(info.Override) > 0 {
 		return info.Override, nil
@@ -42,8 +40,7 @@ func GetNonce(info NonceInfo, maxRps int) ([]uint64, error) {
 	delay := time.Second / time.Duration(maxRps-1)
 
 	var (
-		nonceRet []uint64
-		mu       sync.Mutex
+		nonceRet = make([]uint64, len(info.Addresses)+len(info.NonceReqs))   // Pre-allocate slice for deterministic order
 		errChan  = make(chan error, len(info.Addresses)+len(info.NonceReqs)) // Channel to capture errors
 	)
 
@@ -51,7 +48,7 @@ func GetNonce(info NonceInfo, maxRps int) ([]uint64, error) {
 	workerPool := make(chan struct{}, maxRps)
 
 	// Function to process a single address or request
-	processNonce := func(addr string, req *pb.NonceRequest, useIndexer bool) {
+	processNonce := func(index int, addr string, req *pb.NonceRequest, useIndexer bool) {
 		defer func() { <-workerPool }() // Release the worker slot when done
 
 		// Wait for rate limiter
@@ -60,9 +57,7 @@ func GetNonce(info NonceInfo, maxRps int) ([]uint64, error) {
 		if useIndexer {
 			// Indexer mode
 			if strings.HasPrefix(addr, "gov_") {
-				mu.Lock()
-				nonceRet = append(nonceRet, 0)
-				mu.Unlock()
+				nonceRet[index] = 0
 				return
 			}
 
@@ -103,15 +98,11 @@ func GetNonce(info NonceInfo, maxRps int) ([]uint64, error) {
 				return
 			}
 
-			mu.Lock()
-			nonceRet = append(nonceRet, nonce)
-			mu.Unlock()
+			nonceRet[index] = nonce
 		} else {
 			// Validator mode
 			if strings.HasPrefix(string(req.WalletAddress), "gov_") {
-				mu.Lock()
-				nonceRet = append(nonceRet, 0)
-				mu.Unlock()
+				nonceRet[index] = 0
 				return
 			}
 
@@ -144,9 +135,7 @@ func GetNonce(info NonceInfo, maxRps int) ([]uint64, error) {
 				}
 			}
 
-			mu.Lock()
-			nonceRet = append(nonceRet, response.GetNonce()+1)
-			mu.Unlock()
+			nonceRet[index] = response.GetNonce() + 1
 		}
 	}
 
@@ -156,16 +145,16 @@ func GetNonce(info NonceInfo, maxRps int) ([]uint64, error) {
 			return []uint64{}, fmt.Errorf("indexerURL, authorization, and address are required when useIndexer is true")
 		}
 
-		for _, addr := range info.Addresses {
+		for i, addr := range info.Addresses {
 			workerPool <- struct{}{} // Acquire a worker slot
-			go processNonce(addr, nil, true)
+			go processNonce(i, addr, nil, true)
 		}
 	}
 
 	// Process Validator mode
-	for _, req := range info.NonceReqs {
+	for i, req := range info.NonceReqs {
 		workerPool <- struct{}{} // Acquire a worker slot
-		go processNonce("", req, false)
+		go processNonce(len(info.Addresses)+i, "", req, false)
 	}
 
 	// Wait for all workers to finish
