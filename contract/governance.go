@@ -12,8 +12,8 @@ type GovernanceType int16
 const (
 	Staged    GovernanceType = 0
 	Cycle     GovernanceType = 1
-	Adaptive  GovernanceType = 2
-	Staggared GovernanceType = 3
+	Staggared GovernanceType = 2
+	Adaptive  GovernanceType = 3
 )
 
 type GovernanceTypeHelper struct {
