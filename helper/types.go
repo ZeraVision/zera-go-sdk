@@ -6,6 +6,7 @@ const (
 	SPECIAL KeyType = 0 // special key -- ie gov, sc, no sig
 	ED25519 KeyType = 1
 	ED448   KeyType = 2
+	Unknown KeyType = 32767
 )
 
 type HashType int16

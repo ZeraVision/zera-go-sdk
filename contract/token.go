@@ -11,6 +11,7 @@ import (
 	"github.com/ZeraVision/zera-go-sdk/helper"
 	"github.com/ZeraVision/zera-go-sdk/nonce"
 	"github.com/ZeraVision/zera-go-sdk/transcode"
+	"github.com/ZeraVision/zera-go-sdk/wallet"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/proto"
@@ -23,7 +24,7 @@ type TokenData struct {
 	ContractId         string                 // Contract ID (ie $ZRA+0000 - must be unique to network)
 	Symbol             string                 // Symbol (ie ZRA) without any contractID identifier (ie $ZRA+0000)
 	Name               string                 // Name of the contract (ie ZERA)
-	Memo               string                 // Memo in base
+	Memo               *string                // Memo in base
 	Governance         *pb.Governance         // Governance configuration (ie staged, cycle, adaptive, staged, cycle, [empty])
 	RestrictedKeys     []*pb.RestrictedKey    // Restricted keys for the contract (ie empty (not suitable for most cases), other specicial permissions)
 	Denomination       *pb.CoinDenomination   // How many 'parts' per coin there are (ie ZERA has 1_000_000_000 parts per coin)
@@ -68,10 +69,7 @@ func CreateTokenTXN(nonceInfo nonce.NonceInfo, data *TokenData, publicKeyBase58 
 		FeeAmount: feeAmountParts,
 		Timestamp: timestamppb.New(time.Now().UTC()),
 		Nonce:     nonce[0],
-	}
-
-	if data.Memo != "" {
-		base.Memo = &data.Memo
+		Memo:      data.Memo,
 	}
 
 	var startCurequivStr *string
@@ -120,14 +118,9 @@ func CreateTokenTXN(nonceInfo nonce.NonceInfo, data *TokenData, publicKeyBase58 
 		return nil, fmt.Errorf("failed to serialize contract transaction: %v", err)
 	}
 
-	// Ed25519
-	var keyType helper.KeyType
-	if strings.HasPrefix(publicKeyBase58, "A") {
-		keyType = helper.ED25519
-	} else if strings.HasPrefix(publicKeyBase58, "B") {
-		keyType = helper.ED448
-	} else {
-		return nil, fmt.Errorf("unknown key type for public key: %s", publicKeyBase58)
+	keyType, err := wallet.DetermineKeyType(publicKeyBase58)
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine key type: %v", err)
 	}
 
 	signature, err := helper.Sign(privateKeyBase58, byteDataNoSig, keyType)

@@ -1,6 +1,6 @@
 # ZERA Network Go SDK
 
-**Note:** [BETA Library Development -- First release version April 2025. All functions may not work as expected]
+**Note:** [BETA Library Development -- First release version June 2025. All functions may not work as expected]
 
 This **ZERA Network Go SDK** is a powerful library for developers building on the ZERA Network. It is purpose-built to simplify and accelerate development by providing clean, well-documented, and reliable access to the ZERA Network’s core infrastructure. This SDK serves as the foundation for a wide range of platforms, services, and high-volume transaction systems operating within the ZERA ecosystem.
 
