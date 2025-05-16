@@ -87,12 +87,12 @@ func GeneratePublicKey(publicKey PublicKey) (*pb.PublicKey, error) {
 
 		// Translate embedded array into network format
 		for _, pattern := range publicKey.Multi.Pattern { // Outer slice
-			classArray := []int32{}
-			requiredArray := []int32{}
+			classArray := []uint32{}
+			requiredArray := []uint32{}
 
 			for _, elements := range pattern { // Inner slice
-				classArray = append(classArray, elements.Class)
-				requiredArray = append(requiredArray, elements.Required)
+				classArray = append(classArray, uint32(elements.Class))
+				requiredArray = append(requiredArray, uint32(elements.Required))
 			}
 
 			// Append the converted pattern to MultiPatterns
