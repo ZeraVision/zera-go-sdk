@@ -1,7 +1,9 @@
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
-github.com/ZeraVision/go-zera-network v0.0.179 h1:gz6sxq/ctUxoPRdg9Kp7VF93q6WBW0B/pXKUsUxA7N8=
-github.com/ZeraVision/go-zera-network v0.0.179/go.mod h1:IL2+9+xFDAtNmxgkOJ8Wt/td0HBj6ejyIIPyDcAuk0c=
+github.com/ZeraVision/go-zera-network v0.0.183 h1:0dhrV6Qx2/kZwzid8b9DV267/BrlkEnl9jc/mqtPZlQ=
+github.com/ZeraVision/go-zera-network v0.0.183/go.mod h1:IL2+9+xFDAtNmxgkOJ8Wt/td0HBj6ejyIIPyDcAuk0c=
+github.com/ZeraVision/go-zera-network v0.0.184 h1:Ap01Zw0twk+bocKrtvhyjsqgshcnfYZavpBeQwOYYM4=
+github.com/ZeraVision/go-zera-network v0.0.184/go.mod h1:IL2+9+xFDAtNmxgkOJ8Wt/td0HBj6ejyIIPyDcAuk0c=
 github.com/ZeraVision/zn-wallet-manager v0.0.0-20250304003022-fc6107d50d12 h1:a+wBbte7ORMaRr0rjssQlm/1rLaS22NDKqPihB5T1Zk=
 github.com/ZeraVision/zn-wallet-manager v0.0.0-20250304003022-fc6107d50d12/go.mod h1:wom2/FtgpmSXDWVVXaGYu3vLKbiF4S6iwd0gaiRM6xc=
 github.com/cloudflare/circl v1.6.0 h1:cr5JKic4HI+LkINy2lg3W2jF8sHCVTBncJr5gIIq7qk=

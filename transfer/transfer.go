@@ -19,6 +19,7 @@ import (
 )
 
 type Inputs struct {
+	AllowanceAddr      *string // specify non-empty address of allower if allowance transaction, otherwise leave empty
 	B58Address         string
 	KeyType            helper.KeyType
 	PublicKey          string   // Base 58 encoded
@@ -92,23 +93,26 @@ func CreateCoinTxn(nonceInfo nonce.NonceInfo, partsInfo parts.PartsInfo, inputs 
 }
 
 type keyTracking struct {
+	Allowance  bool
 	KeyType    helper.KeyType
 	PrivateKey string
 }
 
 type authTracking struct {
-	PublicKeyBytes []byte
-	Signature      []byte
-	Nonce          uint64
+	PublicKeyBytes   []byte
+	Signature        []byte
+	Nonce            uint64
+	AllowanceAddress []byte
+	AllowanceNonce   uint64
 }
 
+// For allowance transaction -- first one is your own wallet info index [0], [0+n] is those you are calling, ie first allowance called is at [1].
 func processInputs(nonceInfo nonce.NonceInfo, inputs []Inputs, parts *big.Int, maxRps int) ([]*pb.InputTransfers, []authTracking, map[string]keyTracking, *big.Int, error) {
 	var (
 		inputTransfers []*pb.InputTransfers
 		auth           []authTracking
 		keys           = map[string]keyTracking{}
 		totalInput     = big.NewInt(0)
-		index          uint64
 	)
 
 	// Get nonce
@@ -117,44 +121,82 @@ func processInputs(nonceInfo nonce.NonceInfo, inputs []Inputs, parts *big.Int, m
 		return nil, nil, nil, nil, fmt.Errorf("could not get nonce: %v", err)
 	}
 
+	var isAllowance bool
+
 	for i, input := range inputs {
+		var err error
+		var pubKeyByte []byte
+
 		// Decode public key
-		_, _, pubKeyByte, err := transcode.Base58DecodePublicKey(input.PublicKey)
+		_, _, pubKeyByte, err = transcode.Base58DecodePublicKey(input.PublicKey)
 		if err != nil {
 			return nil, nil, nil, nil, fmt.Errorf("could not decode public key: %v", err)
 		}
 
+		// Allowance
+		if input.AllowanceAddr != nil {
+
+			var allowanceAddr []byte
+			if input.AllowanceAddr != nil {
+				allowanceAddr, err = transcode.Base58Decode(*input.AllowanceAddr)
+				if err != nil {
+					return nil, nil, nil, nil, fmt.Errorf("could not decode allowance address: %v", err)
+				}
+			} else {
+				return nil, nil, nil, nil, fmt.Errorf("allowance address is required for allowance transaction")
+			}
+
+			if len(auth) < i {
+				auth = append(auth, authTracking{})
+			}
+
+			auth[i-1].AllowanceAddress = allowanceAddr
+
+			if len(nonce) <= i {
+				return nil, nil, nil, nil, fmt.Errorf("not enough nonces for allowance transaction, review documentation on how to organize nonces into a allowance transaction within this SDK. See transfer_test.go for examples")
+			}
+
+			auth[i-1].AllowanceNonce = nonce[i]
+
+		} else { // regular
+			auth = append(auth, authTracking{
+				PublicKeyBytes: pubKeyByte,
+				Signature:      nil,
+				Nonce:          nonce[i],
+			})
+		}
+
 		// Parse amount string (e.g., "1.23")
-		amountParts, err := parseAmountToParts(input.Amount, parts)
+		var amountParts *big.Int
+		if len(input.Amount) < 1 && inputs[i+1].AllowanceAddr != nil { // first allowance index
+			amountParts, err = parseAmountToParts(inputs[i+1].Amount, parts)
+			isAllowance = true
+		} else if isAllowance && i+1 == len(inputs) {
+			break
+		} else {
+			amountParts, err = parseAmountToParts(input.Amount, parts)
+		}
+
 		if err != nil {
 			return nil, nil, nil, nil, fmt.Errorf("could not parse amount %q: %v", input.Amount, err)
 		}
 
 		// Append to inputTransfers
 		inputTransfers = append(inputTransfers, &pb.InputTransfers{
-			Index:      index,
+			Index:      uint64(i),
 			Amount:     amountParts.String(), // Store as string representation
 			FeePercent: uint32(input.FeePercent * 1_000_000),
 		})
 
-		// Append to auth
-		auth = append(auth, authTracking{
-			PublicKeyBytes: pubKeyByte,
-			Signature:      nil,
-			Nonce:          nonce[i],
-		})
-
 		// Add to keys map
 		keys[transcode.Base58Encode(pubKeyByte)] = keyTracking{
+			Allowance:  input.AllowanceAddr != nil,
 			KeyType:    input.KeyType,
 			PrivateKey: input.PrivateKey,
 		}
 
 		// Update totalInput
 		totalInput.Add(totalInput, amountParts)
-
-		// Increment index
-		index++
 	}
 
 	return inputTransfers, auth, keys, totalInput, nil
@@ -215,14 +257,18 @@ func parseAmountToParts(amountStr string, partsPerCoin *big.Int) (*big.Int, erro
 	}
 
 	// Convert fractional part to big.Int, aligning with partsPerCoin
-	// Truncate or pad fractional part to match partsPerCoin precision
 	partsPerCoinStr := partsPerCoin.String()
-	precision := len(partsPerCoinStr) - 1                 // e.g., 1000 -> 3 digits
-	fractionalStr = strings.TrimRight(fractionalStr, "0") // Remove trailing zeros
+	precision := len(partsPerCoinStr) - 1 // e.g., 1e9 -> 9 digits of precision
+
+	// Truncate or pad fractional part to match partsPerCoin precision
 	if len(fractionalStr) > precision {
 		fractionalStr = fractionalStr[:precision] // Truncate to precision
+	} else {
+		// Pad with zeros instead of spaces
+		fractionalStr = fractionalStr + strings.Repeat("0", precision-len(fractionalStr))
 	}
-	fractionalStr = fmt.Sprintf("%0*s", precision, fractionalStr) // Pad with zeros
+
+	// Convert fractional part to big.Int
 	fractional, ok := new(big.Int).SetString(fractionalStr, 10)
 	if !ok {
 		return nil, fmt.Errorf("invalid fractional number %q", fractionalStr)
@@ -243,8 +289,19 @@ func parseAmountToParts(amountStr string, partsPerCoin *big.Int) (*big.Int, erro
 func buildTransferAuthentication(auth []authTracking) *pb.TransferAuthentication {
 	transferAuth := &pb.TransferAuthentication{}
 	for _, a := range auth {
-		transferAuth.PublicKey = append(transferAuth.PublicKey, &pb.PublicKey{Single: a.PublicKeyBytes})
-		transferAuth.Nonce = append(transferAuth.Nonce, a.Nonce)
+
+		if a.PublicKeyBytes != nil {
+			transferAuth.PublicKey = append(transferAuth.PublicKey, &pb.PublicKey{Single: a.PublicKeyBytes})
+		}
+
+		if a.Nonce != 0 {
+			transferAuth.Nonce = append(transferAuth.Nonce, a.Nonce)
+		}
+
+		if a.AllowanceAddress != nil && a.AllowanceNonce != 0 {
+			transferAuth.AllowanceAddress = append(transferAuth.AllowanceAddress, a.AllowanceAddress)
+			transferAuth.AllowanceNonce = append(transferAuth.AllowanceNonce, a.AllowanceNonce)
+		}
 	}
 	return transferAuth
 }
@@ -267,6 +324,11 @@ func signTransaction(txn *pb.CoinTXN, keys map[string]keyTracking) (*pb.CoinTXN,
 
 	for _, auth := range txn.Auth.PublicKey {
 		if key, ok := keys[transcode.Base58Encode(auth.Single)]; ok {
+
+			if key.Allowance {
+				continue
+			}
+
 			signature, err := helper.Sign(key.PrivateKey, txnBytes, key.KeyType)
 			if err != nil {
 				return nil, fmt.Errorf("could not sign transaction: %v", err)
@@ -307,10 +369,22 @@ func CreateNonceRequests(inputs []Inputs) ([]*pb.NonceRequest, error) {
 	var nonceReqs []*pb.NonceRequest
 
 	for _, input := range inputs {
-		nonceReq, err := nonce.MakeNonceRequest(input.B58Address)
+
+		var nonceReq *pb.NonceRequest
+		var err error
+
+		if len(input.B58Address) > 0 {
+			nonceReq, err = nonce.MakeNonceRequest(input.B58Address)
+		} else if input.AllowanceAddr != nil {
+			nonceReq, err = nonce.MakeNonceRequest(*input.AllowanceAddr)
+		} else {
+			return nil, fmt.Errorf("no address provided for nonce request")
+		}
+
 		if err != nil {
 			return nil, fmt.Errorf("error creating nonce request for address %s: %v", input.B58Address, err)
 		}
+
 		nonceReqs = append(nonceReqs, nonceReq)
 	}
 

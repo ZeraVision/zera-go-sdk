@@ -26,6 +26,7 @@ type NonceInfo struct {
 	Override      []uint64           // optional, if set, this nonce will be used instead of the one from the indexer or validator
 }
 
+// If using for allowance CoinTXN, format should be [0] your own info, and [0+n] for any other involved addrs
 func GetNonce(info NonceInfo, maxRps int) ([]uint64, error) {
 	if len(info.Override) > 0 {
 		return info.Override, nil
