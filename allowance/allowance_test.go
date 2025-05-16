@@ -2,6 +2,7 @@ package allowance_test
 
 import (
 	"math/big"
+	"os"
 	"testing"
 	"time"
 
@@ -21,6 +22,10 @@ func TestAllowance(t *testing.T) {
 	fromAddr := "8ZfvifzSPMhhhivnH6NtaBXcmF3vsSaiB8KBULTetBcR"
 	publicKey := "A_c_FPXdqFTeqC3rHCaAAXmXbunb8C5BbRZEZNGjt23dAVo7"
 	privateKey := "2ap5CkCekErkqJ4UuSGAW1BmRRRNr8hXaebudv1j8TY6mJMSsbnniakorFGmetE4aegsyQAD8WX1N8Q2Y45YEBDs"
+
+	fromAddr = os.Getenv("TEST_ADDR")
+	publicKey = os.Getenv("TEST_PUBLIC")
+	privateKey = os.Getenv("TEST_PRIVATE")
 
 	// Indexer
 	// nonceInfo := nonce.NonceInfo{
