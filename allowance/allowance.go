@@ -56,13 +56,13 @@ func CreateAllowanceTxn(nonceInfo nonce.NonceInfo, symbol string, details Allowa
 
 	// Take curEquivAmount to 1e18
 	if details.CurrencyEquivalent != nil {
-		currencyEquivScaled := new(big.Float).Mul(big.NewFloat(*details.CurrencyEquivalent), big.NewFloat(1e18)).String()
+		currencyEquivScaled := new(big.Float).Mul(big.NewFloat(*details.CurrencyEquivalent), big.NewFloat(1e18)).Text('f', 0)
 		currencyEquivScaledStr = &currencyEquivScaled
 	}
 
 	var amountParts *string
 	if details.Amount != nil {
-		tmp := details.Amount.String()
+		tmp := details.Amount.Text(10)
 		amountParts = &tmp
 	}
 
@@ -99,7 +99,7 @@ func CreateAllowanceTxn(nonceInfo nonce.NonceInfo, symbol string, details Allowa
 
 		Authorize:                 details.Authorize,
 		WalletAddress:             walletAddrByte,
-		AllowedCurrencyEquivelent: currencyEquivScaledStr,
+		AllowedCurrencyEquivalent: currencyEquivScaledStr,
 		AllowedAmount:             amountParts,
 		PeriodMonths:              details.PeriodMonths,
 		PeriodSeconds:             details.PeriodSeconds,
@@ -108,7 +108,7 @@ func CreateAllowanceTxn(nonceInfo nonce.NonceInfo, symbol string, details Allowa
 
 	// nil unneeded params
 	if !allowanceTxn.Authorize {
-		allowanceTxn.AllowedCurrencyEquivelent = nil
+		allowanceTxn.AllowedCurrencyEquivalent = nil
 		allowanceTxn.AllowedAmount = nil
 		allowanceTxn.PeriodMonths = nil
 		allowanceTxn.PeriodSeconds = nil

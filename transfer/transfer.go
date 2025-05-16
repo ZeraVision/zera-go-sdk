@@ -257,14 +257,18 @@ func parseAmountToParts(amountStr string, partsPerCoin *big.Int) (*big.Int, erro
 	}
 
 	// Convert fractional part to big.Int, aligning with partsPerCoin
-	// Truncate or pad fractional part to match partsPerCoin precision
 	partsPerCoinStr := partsPerCoin.String()
-	precision := len(partsPerCoinStr) - 1                 // e.g., 1000 -> 3 digits
-	fractionalStr = strings.TrimRight(fractionalStr, "0") // Remove trailing zeros
+	precision := len(partsPerCoinStr) - 1 // e.g., 1e9 -> 9 digits of precision
+
+	// Truncate or pad fractional part to match partsPerCoin precision
 	if len(fractionalStr) > precision {
 		fractionalStr = fractionalStr[:precision] // Truncate to precision
+	} else {
+		// Pad with zeros instead of spaces
+		fractionalStr = fractionalStr + strings.Repeat("0", precision-len(fractionalStr))
 	}
-	fractionalStr = fmt.Sprintf("%0*s", precision, fractionalStr) // Pad with zeros
+
+	// Convert fractional part to big.Int
 	fractional, ok := new(big.Int).SetString(fractionalStr, 10)
 	if !ok {
 		return nil, fmt.Errorf("invalid fractional number %q", fractionalStr)
@@ -365,10 +369,22 @@ func CreateNonceRequests(inputs []Inputs) ([]*pb.NonceRequest, error) {
 	var nonceReqs []*pb.NonceRequest
 
 	for _, input := range inputs {
-		nonceReq, err := nonce.MakeNonceRequest(input.B58Address)
+
+		var nonceReq *pb.NonceRequest
+		var err error
+
+		if len(input.B58Address) > 0 {
+			nonceReq, err = nonce.MakeNonceRequest(input.B58Address)
+		} else if input.AllowanceAddr != nil {
+			nonceReq, err = nonce.MakeNonceRequest(*input.AllowanceAddr)
+		} else {
+			return nil, fmt.Errorf("no address provided for nonce request")
+		}
+
 		if err != nil {
 			return nil, fmt.Errorf("error creating nonce request for address %s: %v", input.B58Address, err)
 		}
+
 		nonceReqs = append(nonceReqs, nonceReq)
 	}
 
