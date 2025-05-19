@@ -20,6 +20,7 @@ import (
 )
 
 type TokenData struct {
+	Type               pb.CONTRACT_TYPE       // Type of token (token, nft, sbt)
 	ContractVersion    uint64                 // [suggested] major (as needed) - minor (x2) - patch (x3) (ie 1.1.0 = 101000 = 1 | 01 | 000)
 	ContractId         string                 // Contract ID (ie $ZRA+0000 - must be unique to network)
 	Symbol             string                 // Symbol (ie ZRA) without any contractID identifier (ie $ZRA+0000)
@@ -43,7 +44,7 @@ type TokenData struct {
 	CurEquivStart      *float64               // A starter version of "SelfCurrencyEquiv" that can set initial on chain rate, pass in as float64
 }
 
-func CreateTokenTXN(nonceInfo nonce.NonceInfo, data *TokenData, publicKeyBase58 string, privateKeyBase58 string, feeID string, feeAmountParts string) (*pb.InstrumentContract, error) {
+func CreateContractTXN(nonceInfo nonce.NonceInfo, data *TokenData, publicKeyBase58 string, privateKeyBase58 string, feeID string, feeAmountParts string) (*pb.InstrumentContract, error) {
 	// Step 1: Decode public key
 	_, _, pubKeyBytes, err := transcode.Base58DecodePublicKey(publicKeyBase58)
 	if err != nil {
@@ -110,6 +111,12 @@ func CreateTokenTXN(nonceInfo nonce.NonceInfo, data *TokenData, publicKeyBase58 
 		KycStatus:          data.KycStatus,
 		ImmutableKycStatus: data.ImmutableKycStatus,
 		CurEquivStart:      startCurequivStr,
+	}
+
+	if data.Type != pb.CONTRACT_TYPE_TOKEN {
+		contractTxn.PremintWallets = nil
+		contractTxn.CurEquivStart = nil
+		contractTxn.CoinDenomination = nil
 	}
 
 	// Step 4: Serialize transaction before signing

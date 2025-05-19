@@ -222,7 +222,7 @@ func TestTokenCreation(t *testing.T) {
 	tokenData.CustomParameters = contract.CreateCustomParameters(customConfig)
 
 	// Final step: Build the token creation transaction
-	txn, err := contract.CreateTokenTXN(nonceInfo, tokenData, publicKey, privateKey, baseFeeSymbol, baseFeeParts)
+	txn, err := contract.CreateContractTXN(nonceInfo, tokenData, publicKey, privateKey, baseFeeSymbol, baseFeeParts)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
