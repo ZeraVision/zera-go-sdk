@@ -90,7 +90,7 @@ func CreateContractTXN(nonceInfo nonce.NonceInfo, data *TokenData, publicKeyBase
 	// Step 3: Construct Token Contract
 	contractTxn := &pb.InstrumentContract{
 		Base:               base,
-		Type:               pb.CONTRACT_TYPE_TOKEN,
+		Type:               data.Type,
 		ContractVersion:    data.ContractVersion,
 		ContractId:         data.ContractId,
 		Symbol:             data.Symbol,
