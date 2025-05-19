@@ -1,7 +1,7 @@
 package wallet
 
 import (
-	"fmt"
+	"log"
 	"strings"
 
 	"github.com/ZeraVision/zera-go-sdk/helper"
@@ -18,8 +18,9 @@ func DetermineKeyType(publicKeyBase58 string) (helper.KeyType, error) {
 		keyType = helper.ED25519
 	} else if strings.HasPrefix(publicKeyBase58, "B") {
 		keyType = helper.ED448
-	} else {
-		return helper.Unknown, fmt.Errorf("unknown key type for public key: %s", publicKeyBase58)
+	} else if strings.HasPrefix(publicKeyBase58, "special") {
+		log.Printf("Special key type inferred: %s", publicKeyBase58)
+		keyType = helper.SPECIAL
 	}
 
 	return keyType, nil

@@ -10,6 +10,7 @@ import (
 	"github.com/ZeraVision/zera-go-sdk/helper"
 	"github.com/ZeraVision/zera-go-sdk/nonce"
 	"github.com/ZeraVision/zera-go-sdk/transcode"
+	"github.com/ZeraVision/zera-go-sdk/wallet"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/proto"
@@ -92,27 +93,10 @@ func CreateMintTxn(nonceInfo nonce.NonceInfo, symbol string, amount string, reci
 		return nil, fmt.Errorf("not possible to do restricted logic (requires r_, gov_, or sc_ key): %s", publicKeyBase58)
 	}
 
-	// Find the substring between "r_" and the next "_"
-	pubKeyParts := strings.SplitN(publicKeyBase58, "_", 3) // Split into at most 3 parts
-	var keyLetter string
-	if len(pubKeyParts) > 2 {
-		keyLetter = pubKeyParts[1]
-	} else if strings.HasPrefix(publicKeyBase58, "gov_") || strings.HasPrefix(publicKeyBase58, "sc_") {
-		keyLetter = "special"
-	} else {
-		return nil, fmt.Errorf("invalid public key format: %s", publicKeyBase58)
-	}
-
 	// Ed25519
-	var keyType helper.KeyType
-	if keyLetter == "A" {
-		keyType = helper.ED25519
-	} else if keyLetter == "B" {
-		keyType = helper.ED448
-	} else if keyLetter == "special" {
-		keyType = helper.SPECIAL
-	} else {
-		return nil, fmt.Errorf("unknown key type for public key: %s", publicKeyBase58)
+	keyType, err := wallet.DetermineKeyType(publicKeyBase58)
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine key type: %v", err)
 	}
 
 	signature, err := helper.Sign(privateKeyBase58, byteDataNoSig, keyType)
