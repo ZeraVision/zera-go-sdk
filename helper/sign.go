@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ZeraVision/zn-wallet-manager/transcode"
+	"github.com/ZeraVision/zera-go-sdk/transcode"
 	"github.com/cloudflare/circl/sign/ed448"
 	ed25519 "github.com/teserakt-io/golang-ed25519"
 )
