@@ -98,19 +98,19 @@ func CreateComplianceTxn(nonceInfo nonce.NonceInfo, symbol string, details []Com
 	}
 
 	// Step 6: Assign signature to base
-	allowanceTxn.Base.Signature = signature
+	complianceTxn.Base.Signature = signature
 
 	// Step 7: Serialize again with signature
-	byteDataWithSig, err := proto.Marshal(allowanceTxn)
+	byteDataWithSig, err := proto.Marshal(complianceTxn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to serialize signed compliance transaction: %v", err)
 	}
 
 	// Step 8: Hash the signed transaction
 	hash := transcode.SHA3256(byteDataWithSig)
-	allowanceTxn.Base.Hash = hash
+	complianceTxn.Base.Hash = hash
 
-	return allowanceTxn, nil
+	return complianceTxn, nil
 }
 
 func SendComplianceTxn(grpcAddr string, txn *pb.ComplianceTXN) (*emptypb.Empty, error) {
