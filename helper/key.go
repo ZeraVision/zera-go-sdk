@@ -6,6 +6,9 @@ import (
 )
 
 func DetermineKeyType(publicKeyBase58 string) (KeyType, error) {
+
+	publicKeyBase58 = strings.TrimPrefix(publicKeyBase58, "r_")
+
 	keyLetter := strings.Split(publicKeyBase58, "_")[0]
 	switch keyLetter {
 	case "A":
