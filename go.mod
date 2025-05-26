@@ -5,6 +5,7 @@ go 1.23.2
 require (
 	github.com/ZeraVision/go-zera-network v0.0.184
 	github.com/cloudflare/circl v1.6.0
+	github.com/golang/protobuf v1.5.4
 	github.com/jackc/pgtype v1.14.4
 	github.com/joho/godotenv v1.5.1
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8
@@ -17,7 +18,6 @@ require (
 )
 
 require (
-	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgx/v4 v4.18.3 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.12 // indirect

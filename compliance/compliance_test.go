@@ -62,7 +62,7 @@ func TestCompliance(t *testing.T) {
 		},
 	}
 
-	txn, err := compliance.CreateComplianceTxn(nonceInfo, symbol, complianceDetails, fromAddr, publicKey, privateKey, baseFeeSymbol, baseFeeParts) // feeID and feeAmountParts are not used in this test case
+	txn, err := compliance.CreateComplianceTxn(nonceInfo, symbol, complianceDetails, publicKey, privateKey, baseFeeSymbol, baseFeeParts) // feeID and feeAmountParts are not used in this test case
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
