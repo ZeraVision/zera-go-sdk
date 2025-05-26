@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"math/big"
 	"strings"
 	"time"
 
@@ -25,7 +26,7 @@ import (
 func CreateItemMintTxn(
 	nonceInfo nonce.NonceInfo,
 	contractId string,
-	itemId string,
+	itemId *big.Int,
 	recipient string,
 	publicKeyBase58 string,
 	privateKeyBase58 string,
@@ -34,7 +35,7 @@ func CreateItemMintTxn(
 	parameters []*pb.KeyValuePair,
 	expiry *uint64,
 	validFrom *uint64,
-	votingWeight *string,
+	votingWeight *big.Int,
 	contractFees *pb.ItemContractFees,
 ) (*pb.ItemizedMintTXN, error) {
 	// Step 1: Decode recipient address
@@ -78,7 +79,7 @@ func CreateItemMintTxn(
 	itemMintTxn := &pb.ItemizedMintTXN{
 		Base:             base,
 		ContractId:       contractId,
-		ItemId:           itemId,
+		ItemId:           itemId.Text(10),
 		RecipientAddress: recipientBytes,
 		Parameters:       parameters,
 		ContractFees:     contractFees,
@@ -90,7 +91,8 @@ func CreateItemMintTxn(
 		itemMintTxn.ValidFrom = validFrom
 	}
 	if votingWeight != nil {
-		itemMintTxn.VotingWeight = votingWeight
+		votingWeightStr := votingWeight.Text(10)
+		itemMintTxn.VotingWeight = &votingWeightStr
 	}
 
 	// Step 5: Serialize transaction before signing

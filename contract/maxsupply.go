@@ -6,7 +6,6 @@ import (
 
 	pb "github.com/ZeraVision/go-zera-network/grpc/protobuf"
 	"github.com/ZeraVision/zera-go-sdk/convert"
-	"github.com/ZeraVision/zn-wallet-manager/functions"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -42,7 +41,7 @@ func CreateMaxSupplyRelease(releaseConfig []ReleaseScheduleConfig, parts *big.In
 		totalRelease = totalRelease.Add(totalRelease, releaseAmount)
 	}
 
-	if totalRelease.Cmp(functions.ToBigInt(maxSupply)) != 0 {
+	if totalRelease.Cmp(convert.ToBigInt(maxSupply)) != 0 {
 		return nil, fmt.Errorf("total release amount %v does not match max supply %v", totalRelease, maxSupply)
 	}
 
