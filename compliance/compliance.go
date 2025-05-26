@@ -54,7 +54,7 @@ func CreateComplianceTxn(nonceInfo nonce.NonceInfo, symbol string, details []Com
 	}
 
 	// Step 3: Construct Compliance
-	allowanceTxn := &pb.ComplianceTXN{
+	complianceTxn := &pb.ComplianceTXN{
 		Base:       base,
 		ContractId: symbol,
 		Compliance: []*pb.ComplianceAssign{},
@@ -65,7 +65,12 @@ func CreateComplianceTxn(nonceInfo nonce.NonceInfo, symbol string, details []Com
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode wallet address: %v", err)
 		}
-		allowanceTxn.Compliance = append(allowanceTxn.Compliance, &pb.ComplianceAssign{
+
+		if detail.Expiry == nil {
+			detail.Expiry = timestamppb.New(time.Now().Add(time.Hour * 999999)) // make ~114 years in the future (effectively max)
+		}
+
+		complianceTxn.Compliance = append(complianceTxn.Compliance, &pb.ComplianceAssign{
 			RecipientAddress: walletAddrByte,
 			ComplianceLevel:  detail.Level,
 			AssignRevoke:     detail.Assign,
@@ -74,9 +79,9 @@ func CreateComplianceTxn(nonceInfo nonce.NonceInfo, symbol string, details []Com
 	}
 
 	// Step 4: Serialize transaction before signing
-	byteDataNoSig, err := proto.Marshal(allowanceTxn)
+	byteDataNoSig, err := proto.Marshal(complianceTxn)
 	if err != nil {
-		return nil, fmt.Errorf("failed to serialize allowance transaction: %v", err)
+		return nil, fmt.Errorf("failed to serialize compliance transaction: %v", err)
 	}
 
 	keyType, err := helper.DetermineKeyType(publicKeyBase58)
